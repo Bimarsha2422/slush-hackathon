@@ -1,0 +1,23 @@
+{{!-- src/views/topic.hbs --}}
+<div class="topic-container">
+    <h2>{{title}}</h2>
+    
+    <div class="problems-list">
+        {{#if problems.length}}
+            {{#each problems}}
+                <div class="problem-card">
+                    <h3>Problem {{this.id}}</h3>
+                    <p>Level: {{this.level}}</p>
+                    <div class="problem-text">
+                        {{{this.problem}}}
+                    </div>
+                    <a href="/problems/{{../topicName}}/{{this.id}}" class="solve-button">
+                        Solve This Problem
+                    </a>
+                </div>
+            {{/each}}
+        {{else}}
+            <p>No problems found for this topic.</p>
+        {{/if}}
+    </div>
+</div>

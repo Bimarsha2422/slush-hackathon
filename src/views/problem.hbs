@@ -1,0 +1,307 @@
+<div class="problem-container">
+    <div class="problem-header">
+        <h2>{{problem.type}} - Level {{problem.level}}</h2>
+        <a href="/topics/{{topicName}}" class="back-link">← Back to {{topicName}}</a>
+    </div>
+
+    <div class="problem-content">
+        <!-- Problem Statement -->
+        <div class="problem-statement latex-content">
+            <div class="statement-header">Problem:</div>
+            {{{problem.problem}}}
+        </div>
+
+        <div class="workspace">
+            <!-- Main Solution Area -->
+            <div class="work-section">
+                <div class="section-header">Your Solution:</div>
+                <textarea id="mainWorkArea" class="main-work-area" 
+                    placeholder="Write your solution steps here..."></textarea>
+            </div>
+
+            <!-- Help Section -->
+            <div class="help-section">
+                <div class="section-header">Need Help?</div>
+                <textarea id="helpQuery" class="help-query" 
+                    placeholder="Ask a specific question or describe where you're stuck..."></textarea>
+                
+                <div class="help-buttons">
+                    <button onclick="getAIHelp('hint')" class="help-btn">
+                        💡 Get Hint
+                    </button>
+                    <button onclick="getAIHelp('nextStep')" class="help-btn">
+                        ➡️ Show Next Step
+                    </button>
+                    <button onclick="getAIHelp('validate')" class="help-btn">
+                        ✅ Check My Work
+                    </button>
+                    <button onclick="getAIHelp('improve')" class="help-btn">
+                        📝 Improve Writing
+                    </button>
+                </div>
+
+                <!-- Response History Section -->
+                <div class="response-history">
+                    <button onclick="togglePreviousResponses()" class="toggle-btn" id="toggleBtn">
+                        Show Previous Responses (0)
+                    </button>
+                    <div id="previousResponses" class="previous-responses"></div>
+                </div>
+
+                <!-- Current Response -->
+                <div id="currentResponse" class="current-response"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.problem-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #1a1a1a;
+    color: #e0e0e0;
+}
+
+.problem-header {
+    margin-bottom: 20px;
+}
+
+.back-link {
+    color: #4f46e5;
+    text-decoration: none;
+}
+
+.problem-statement {
+    background: #2d2d2d;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #404040;
+}
+
+.statement-header, .section-header {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #6366f1;
+}
+
+.workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.work-section, .help-section {
+    background: #2d2d2d;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #404040;
+}
+
+.main-work-area, .help-query {
+    width: 100%;
+    min-height: 120px;
+    padding: 15px;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    background: #383838;
+    color: #e0e0e0;
+    font-family: monospace;
+    resize: vertical;
+    margin-bottom: 15px;
+}
+
+.help-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.help-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #4f46e5;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-size: 14px;
+}
+
+.help-btn:hover {
+    background: #6366f1;
+}
+
+/* Response History Styles */
+.response-history {
+    margin-top: 20px;
+}
+
+.toggle-btn {
+    padding: 8px 16px;
+    background: #383838;
+    border: 1px solid #4f46e5;
+    color: #e0e0e0;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    margin-bottom: 10px;
+}
+
+.previous-responses {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.previous-responses.expanded {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.response-entry {
+    position: relative;
+    padding: 15px;
+    margin: 10px 0;
+    background: #383838;
+    border-left: 4px solid #4f46e5;
+    border-radius: 4px;
+}
+
+.response-type {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    font-size: 0.8em;
+    color: #888;
+}
+
+.current-response {
+    padding: 15px;
+    margin-top: 15px;
+    background: #383838;
+    border-left: 4px solid #4f46e5;
+    border-radius: 4px;
+}
+</style>
+
+<script>
+let responseHistory = [];
+let isExpanded = false;
+let currentProblemId = '{{topicName}}/{{problemId}}'; // Add this line to track current problem
+
+// Clear history when loading new problem
+function clearHistory() {
+    responseHistory = [];
+    document.getElementById('previousResponses').innerHTML = '';
+    document.getElementById('currentResponse').innerHTML = '';
+    document.getElementById('toggleBtn').textContent = 'Show Previous Responses (0)';
+}
+
+// When page loads, clear any previous history
+document.addEventListener('DOMContentLoaded', clearHistory);
+
+function togglePreviousResponses() {
+    const previousResponses = document.getElementById('previousResponses');
+    const toggleBtn = document.getElementById('toggleBtn');
+    isExpanded = !isExpanded;
+    
+    if (isExpanded) {
+        previousResponses.classList.add('expanded');
+        toggleBtn.textContent = `Hide Previous Responses (${responseHistory.length})`;
+    } else {
+        previousResponses.classList.remove('expanded');
+        toggleBtn.textContent = `Show Previous Responses (${responseHistory.length})`;
+    }
+}
+
+async function getAIHelp(helpType) {
+    const mainWorkArea = document.getElementById('mainWorkArea');
+    const helpQuery = document.getElementById('helpQuery');
+    const currentResponse = document.getElementById('currentResponse');
+    const problemId = '{{topicName}}/{{problemId}}';
+    if (problemId !== currentProblemId) {
+        currentProblemId = problemId;
+        clearHistory();
+    }
+    // If current response exists, move it to history
+    if (currentResponse.innerHTML.trim()) {
+        responseHistory.push({
+            content: currentResponse.innerHTML,
+            type: helpType,
+            timestamp: new Date().toLocaleTimeString()
+        });
+
+        // Update previous responses
+        const previousResponses = document.getElementById('previousResponses');
+        previousResponses.innerHTML = responseHistory.map(response => `
+            <div class="response-entry">
+                <div class="response-type">${response.type} - ${response.timestamp}</div>
+                <div class="response-content">${response.content}</div>
+            </div>
+        `).join('');
+
+        // Update counter
+        document.getElementById('toggleBtn').textContent = 
+            `${isExpanded ? 'Hide' : 'Show'} Previous Responses (${responseHistory.length})`;
+    }
+
+    // Show loading state
+    currentResponse.innerHTML = 'Getting help...';
+
+    try {
+        const response = await fetch('/api/help', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                helpType,
+                problem: {{{json problem}}},
+                work: mainWorkArea.value,
+                query: helpQuery.value,
+                hintHistory: helpType === 'hint' ? responseHistory
+                    .filter(r => r.type === 'hint')
+                    .map(r => ({ content: r.content })) : []
+            })
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        const data = await response.json();
+        currentResponse.innerHTML = data.response;
+
+        // Render LaTeX in both current and previous responses
+        if (window.renderMathInElement) {
+            renderMathInElement(currentResponse, {
+                delimiters: [
+                    {left: "\\[", right: "\\]", display: true},
+                    {left: "\\(", right: "\\)", display: false},
+                    {left: "$", right: "$", display: false},
+                    {left: "$$", right: "$$", display: true}
+                ],
+                throwOnError: false
+            });
+            
+            if (responseHistory.length > 0) {
+                renderMathInElement(document.getElementById('previousResponses'), {
+                    delimiters: [
+                        {left: "\\[", right: "\\]", display: true},
+                        {left: "\\(", right: "\\)", display: false},
+                        {left: "$", right: "$", display: false},
+                        {left: "$$", right: "$$", display: true}
+                    ],
+                    throwOnError: false
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        currentResponse.innerHTML = 'Sorry, there was an error getting help.';
+    }
+}
+</script>
