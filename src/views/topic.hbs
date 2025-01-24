@@ -1,23 +1,98 @@
 {{!-- src/views/topic.hbs --}}
-<div class="topic-container">
-    <h2>{{title}}</h2>
-    
-    <div class="problems-list">
-        {{#if problems.length}}
-            {{#each problems}}
-                <div class="problem-card">
-                    <h3>Problem {{this.id}}</h3>
-                    <p>Level: {{this.level}}</p>
-                    <div class="problem-text">
-                        {{{this.problem}}}
-                    </div>
-                    <a href="/problems/{{../topicName}}/{{this.id}}" class="solve-button">
-                        Solve This Problem
-                    </a>
+<div class="min-h-screen bg-gray-900">
+    <div class="border-b border-gray-700 bg-gray-800/50 mb-8">
+        <div class="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="min-w-0 flex-1">
+                    <h2 class="text-2xl font-bold leading-7 text-white sm:truncate sm:text-3xl sm:tracking-tight">{{title}}</h2>
+                    <p class="mt-2 text-sm text-gray-400">Showing {{problems.length}} problems out of {{pagination.totalItems}} total</p>
                 </div>
+            </div>
+
+            {{!-- Filters --}}
+            <div class="mt-6 flex flex-col sm:flex-row gap-4">
+                <form id="filterForm" class="flex flex-wrap gap-4" method="get">
+                    <input type="hidden" name="page" value="1">
+                    
+                    <div class="flex-1 min-w-[200px]">
+                        <label for="level" class="block text-sm font-medium text-gray-400 mb-2">Difficulty Level</label>
+                        <select name="level" id="level" onchange="this.form.submit()"
+                            class="w-full rounded-md border-0 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="all" {{#if (eq filters.currentLevel "all")}}selected{{/if}}>All Levels</option>
+                            {{#each filters.availableLevels}}
+                            <option value="{{this}}" {{#if (eq ../filters.currentLevel (toString this))}}selected{{/if}}>
+                                Level {{this}}
+                            </option>
+                            {{/each}}
+                        </select>
+                    </div>
+
+                    <div class="flex-1 min-w-[200px]">
+                        <label for="sort" class="block text-sm font-medium text-gray-400 mb-2">Sort By</label>
+                        <select name="sort" id="sort" onchange="this.form.submit()"
+                            class="w-full rounded-md border-0 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="level" {{#if (eq filters.currentSort "level")}}selected{{/if}}>Level (Ascending)</option>
+                            <option value="id" {{#if (eq filters.currentSort "id")}}selected{{/if}}>Problem Number</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="space-y-6">
+            {{#each problems as |problem|}}
+            <div class="bg-gray-800 rounded-lg p-6 shadow-sm">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex flex-wrap gap-2">
+                        <span class="inline-flex items-center rounded-md bg-indigo-400/10 px-2 py-1 text-xs font-medium text-indigo-400 ring-1 ring-inset ring-indigo-400/20">{{problem.type}}</span>
+                        <span class="inline-flex items-center rounded-md bg-purple-400/10 px-2 py-1 text-xs font-medium text-purple-400 ring-1 ring-inset ring-purple-400/20">Level {{problem.numericLevel}}</span>
+                    </div>
+                    <span class="text-sm font-medium text-gray-400">Problem #{{problem.displayNumber}}</span>
+                </div>
+                <div class="text-gray-300 text-sm mb-4 latex-content">{{{problem.problem}}}</div>
+                <a href="/problems/{{../topicName}}/{{problem.id}}" 
+                   class="inline-flex items-center text-sm font-semibold text-indigo-400 hover:text-indigo-300 transition-all duration-200 group">
+                    Solve Problem
+                    <svg class="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform" 
+                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
             {{/each}}
-        {{else}}
-            <p>No problems found for this topic.</p>
+        </div>
+
+        {{!-- Pagination --}}
+        {{#if pagination.totalPages}}
+        <div class="mt-8 flex items-center justify-center space-x-1 pb-8">
+            {{#if pagination.hasPrevPage}}
+            <a href="{{buildUrl currentUrl (merge query (object page='1'))}}" 
+               class="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-800 rounded-md hover:bg-gray-700">
+                First
+            </a>
+            <a href="{{buildUrl currentUrl (merge query (object page=(subtract pagination.currentPage 1)))}}" 
+               class="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-800 rounded-md hover:bg-gray-700">
+                Previous
+            </a>
+            {{/if}}
+
+            <span class="px-4 py-2 text-sm font-medium text-white bg-indigo-500 rounded-md">
+                Page {{pagination.currentPage}} of {{pagination.totalPages}}
+            </span>
+
+            {{#if pagination.hasNextPage}}
+            <a href="{{buildUrl currentUrl (merge query (object page=(add pagination.currentPage 1)))}}" 
+               class="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-800 rounded-md hover:bg-gray-700">
+                Next
+            </a>
+            <a href="{{buildUrl currentUrl (merge query (object page=pagination.totalPages))}}" 
+               class="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-800 rounded-md hover:bg-gray-700">
+                Last
+            </a>
+            {{/if}}
+        </div>
         {{/if}}
     </div>
 </div>

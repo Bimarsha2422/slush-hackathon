@@ -20,7 +20,6 @@ const client = new Groq({
 
 app.use(express.json()); 
 
-// Handlebars setup with .hbs extension
 app.engine('hbs', engine({
     extname: '.hbs',
     defaultLayout: 'main',
@@ -29,9 +28,36 @@ app.engine('hbs', engine({
     helpers: {
         json: function(context) {
             return JSON.stringify(context);
-        }, 
+        },
         eq: function(a, b) {
             return a === b;
+        },
+        add: function(a, b) {
+            return parseInt(a) + parseInt(b);
+        },
+        subtract: function(a, b) {
+            return parseInt(a) - parseInt(b);
+        },
+        toString: function(value) {
+            return value.toString();
+        },
+        merge: function(obj1, obj2) {
+            return { ...obj1, ...obj2 };
+        },
+        buildUrl: function(baseUrl, params) {
+            const searchParams = new URLSearchParams();
+            for (const [key, value] of Object.entries(params)) {
+                searchParams.append(key, value);
+            }
+            return `${baseUrl}?${searchParams.toString()}`;
+        },
+        object: function() {
+            const args = Array.from(arguments);
+            const obj = {};
+            for (let i = 0; i < args.length - 1; i += 2) {
+                obj[args[i]] = args[i + 1];
+            }
+            return obj;
         }
     }
 }));
@@ -44,12 +70,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/topics', topicsRouter);
 app.use('/problems', problemsRouter);
 
-// Basic route
 app.get('/', (req, res) => {
     res.render('home', {
-        title: 'Math Learning Platform'
+        title: 'Math Learning Platform',
+        isHome: true
     });
 });
+
 
 app.post('/api/help', async (req, res) => {
     const { helpType, problem, work, query, hintHistory } = req.body;

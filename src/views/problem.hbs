@@ -1,200 +1,119 @@
-<div class="problem-container">
-    <div class="problem-header">
-        <h2>{{problem.type}} - Level {{problem.level}}</h2>
-        <a href="/topics/{{topicName}}" class="back-link">← Back to {{topicName}}</a>
+{{!-- src/views/problem.hbs --}}
+<div class="min-h-screen bg-gray-900">
+    {{!-- Problem Header --}}
+    <div class="border-b border-gray-700 bg-gray-800/50">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center gap-x-3">
+                <a href="/topics/{{topicName}}" class="text-sm font-medium text-gray-400 hover:text-white transition-colors">← Back to {{title}}</a>
+                <span class="text-gray-600">|</span>
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center rounded-md bg-indigo-400/10 px-2 py-1 text-xs font-medium text-indigo-400 ring-1 ring-inset ring-indigo-400/20">{{problem.type}}</span>
+                    <span class="inline-flex items-center rounded-md bg-purple-400/10 px-2 py-1 text-xs font-medium text-purple-400 ring-1 ring-inset ring-purple-400/20">{{problem.level}}</span>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="problem-content">
-        <!-- Problem Statement -->
-        <div class="problem-statement latex-content">
-            <div class="statement-header">Problem:</div>
-            {{{problem.problem}}}
-        </div>
+    {{!-- Main Content --}}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {{!-- Left Column: Problem and Work Area --}}
+            <div class="space-y-6">
+                {{!-- Problem Statement --}}
+                <div class="bg-gray-800 rounded-lg p-6 shadow-lg">
+                    <h3 class="text-lg font-medium text-white mb-4">Problem Statement</h3>
+                    <div class="latex-content prose prose-invert max-w-none">{{{problem.problem}}}</div>
+                </div>
 
-        <div class="workspace">
-            <!-- Main Solution Area -->
-            <div class="work-section">
-                <div class="section-header">Your Solution:</div>
-                <textarea id="mainWorkArea" class="main-work-area" 
-                    placeholder="Write your solution steps here..."></textarea>
+                {{!-- Work Area --}}
+                <div class="bg-gray-800 rounded-lg p-6 shadow-lg">
+                    <h3 class="text-lg font-medium text-white mb-4">Your Solution</h3>
+                    <textarea id="mainWorkArea" 
+                              class="w-full h-64 bg-gray-900 text-gray-100 rounded-lg p-4 border border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                              placeholder="Write your solution steps here..."></textarea>
+                </div>
             </div>
 
-            <!-- Help Section -->
-            <div class="help-section">
-                <div class="section-header">Need Help?</div>
-                <textarea id="helpQuery" class="help-query" 
-                    placeholder="Ask a specific question or describe where you're stuck..."></textarea>
-                
-                <div class="help-buttons">
-                    <button onclick="getAIHelp('hint')" class="help-btn">
-                        💡 Get Hint
-                    </button>
-                    <button onclick="getAIHelp('nextStep')" class="help-btn">
-                        ➡️ Show Next Step
-                    </button>
-                    <button onclick="getAIHelp('validate')" class="help-btn">
-                        ✅ Check My Work
-                    </button>
-                    <button onclick="getAIHelp('improve')" class="help-btn">
-                        📝 Improve Writing
-                    </button>
+            {{!-- Right Column: Help System --}}
+            <div class="space-y-6">
+                {{!-- Help Query --}}
+                <div class="bg-gray-800 rounded-lg p-6 shadow-lg">
+                    <h3 class="text-lg font-medium text-white mb-4">Need Help?</h3>
+                    <textarea id="helpQuery" 
+                              class="w-full h-24 bg-gray-900 text-gray-100 rounded-lg p-4 border border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 mb-4"
+                              placeholder="Ask a specific question or describe where you're stuck..."></textarea>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <button onclick="getAIHelp('hint')" 
+                                class="inline-flex items-center justify-center px-4 py-2 rounded-md bg-indigo-500 text-white hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            💡 Hint
+                        </button>
+                        <button onclick="getAIHelp('nextStep')" 
+                                class="inline-flex items-center justify-center px-4 py-2 rounded-md bg-indigo-500 text-white hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            ➡️ Next Step
+                        </button>
+                        <button onclick="getAIHelp('validate')" 
+                                class="inline-flex items-center justify-center px-4 py-2 rounded-md bg-indigo-500 text-white hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            ✅ Verify
+                        </button>
+                        <button onclick="getAIHelp('improve')" 
+                                class="inline-flex items-center justify-center px-4 py-2 rounded-md bg-indigo-500 text-white hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            📝 Improve
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Response History Section -->
-                <div class="response-history">
-                    <button onclick="togglePreviousResponses()" class="toggle-btn" id="toggleBtn">
+                {{!-- Response History --}}
+                <div class="bg-gray-800 rounded-lg p-6 shadow-lg">
+                    <button id="toggleBtn" onclick="togglePreviousResponses()" 
+                            class="w-full text-left px-4 py-2 rounded-md bg-gray-700 text-gray-300 hover:bg-gray-600 mb-4">
                         Show Previous Responses (0)
                     </button>
-                    <div id="previousResponses" class="previous-responses"></div>
-                </div>
+                    
+                    <div id="previousResponses" class="space-y-4 hidden">
+                        {{!-- Previous responses will be inserted here --}}
+                    </div>
 
-                <!-- Current Response -->
-                <div id="currentResponse" class="current-response"></div>
+                    <div id="currentResponse" class="text-gray-300 latex-content prose prose-invert max-w-none">
+                        {{!-- Current response will be shown here --}}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-.problem-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    background: #1a1a1a;
-    color: #e0e0e0;
-}
+/* Custom styles for LaTeX content */
+.latex-content .katex { color: #e5e7eb; }
+.latex-content .katex-display { margin: 1em 0; padding: 1em 0; overflow-x: auto; }
+.latex-content::-webkit-scrollbar { height: 4px; }
+.latex-content::-webkit-scrollbar-track { background: #374151; }
+.latex-content::-webkit-scrollbar-thumb { background: #4B5563; border-radius: 2px; }
 
-.problem-header {
-    margin-bottom: 20px;
-}
+/* Transition for response history */
+#previousResponses { transition: all 0.3s ease-in-out; }
+#previousResponses.show { display: block !important; }
 
-.back-link {
-    color: #4f46e5;
-    text-decoration: none;
-}
-
-.problem-statement {
-    background: #2d2d2d;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    border: 1px solid #404040;
-}
-
-.statement-header, .section-header {
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: #6366f1;
-}
-
-.workspace {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.work-section, .help-section {
-    background: #2d2d2d;
-    padding: 20px;
-    border-radius: 8px;
-    border: 1px solid #404040;
-}
-
-.main-work-area, .help-query {
-    width: 100%;
-    min-height: 120px;
-    padding: 15px;
-    border: 1px solid #404040;
-    border-radius: 8px;
-    background: #383838;
-    color: #e0e0e0;
-    font-family: monospace;
-    resize: vertical;
-    margin-bottom: 15px;
-}
-
-.help-buttons {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.help-btn {
-    padding: 12px 20px;
-    border: none;
-    border-radius: 8px;
-    background: #4f46e5;
-    color: white;
-    cursor: pointer;
-    transition: background 0.3s;
-    font-size: 14px;
-}
-
-.help-btn:hover {
-    background: #6366f1;
-}
-
-/* Response History Styles */
-.response-history {
-    margin-top: 20px;
-}
-
-.toggle-btn {
-    padding: 8px 16px;
-    background: #383838;
-    border: 1px solid #4f46e5;
-    color: #e0e0e0;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-    text-align: left;
-    margin-bottom: 10px;
-}
-
-.previous-responses {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out;
-}
-
-.previous-responses.expanded {
-    max-height: 500px;
-    overflow-y: auto;
-}
-
+/* Response entry styling */
 .response-entry {
-    position: relative;
-    padding: 15px;
-    margin: 10px 0;
-    background: #383838;
-    border-left: 4px solid #4f46e5;
-    border-radius: 4px;
+    @apply bg-gray-700 rounded-lg p-4 border-l-4 border-indigo-500;
 }
 
-.response-type {
-    position: absolute;
-    top: 5px;
-    right: 10px;
-    font-size: 0.8em;
-    color: #888;
+.response-entry .response-type {
+    @apply text-xs text-gray-400 mb-2;
 }
 
-.current-response {
-    padding: 15px;
-    margin-top: 15px;
-    background: #383838;
-    border-left: 4px solid #4f46e5;
-    border-radius: 4px;
+.response-entry .response-content {
+    @apply text-gray-300;
 }
 </style>
-
+{{!-- 
 <script>
 let responseHistory = [];
 let isExpanded = false;
-let currentProblemId = '{{topicName}}/{{problemId}}'; // Add this line to track current problem
+let currentProblemId = '{{topicName}}/{{problemId}}';
 
-// Clear history when loading new problem
 function clearHistory() {
     responseHistory = [];
     document.getElementById('previousResponses').innerHTML = '';
@@ -202,7 +121,6 @@ function clearHistory() {
     document.getElementById('toggleBtn').textContent = 'Show Previous Responses (0)';
 }
 
-// When page loads, clear any previous history
 document.addEventListener('DOMContentLoaded', clearHistory);
 
 function togglePreviousResponses() {
@@ -210,13 +128,8 @@ function togglePreviousResponses() {
     const toggleBtn = document.getElementById('toggleBtn');
     isExpanded = !isExpanded;
     
-    if (isExpanded) {
-        previousResponses.classList.add('expanded');
-        toggleBtn.textContent = `Hide Previous Responses (${responseHistory.length})`;
-    } else {
-        previousResponses.classList.remove('expanded');
-        toggleBtn.textContent = `Show Previous Responses (${responseHistory.length})`;
-    }
+    previousResponses.classList.toggle('show');
+    toggleBtn.textContent = `${isExpanded ? 'Hide' : 'Show'} Previous Responses (${responseHistory.length})`;
 }
 
 async function getAIHelp(helpType) {
@@ -224,11 +137,12 @@ async function getAIHelp(helpType) {
     const helpQuery = document.getElementById('helpQuery');
     const currentResponse = document.getElementById('currentResponse');
     const problemId = '{{topicName}}/{{problemId}}';
+
     if (problemId !== currentProblemId) {
         currentProblemId = problemId;
         clearHistory();
     }
-    // If current response exists, move it to history
+
     if (currentResponse.innerHTML.trim()) {
         responseHistory.push({
             content: currentResponse.innerHTML,
@@ -236,7 +150,6 @@ async function getAIHelp(helpType) {
             timestamp: new Date().toLocaleTimeString()
         });
 
-        // Update previous responses
         const previousResponses = document.getElementById('previousResponses');
         previousResponses.innerHTML = responseHistory.map(response => `
             <div class="response-entry">
@@ -245,20 +158,16 @@ async function getAIHelp(helpType) {
             </div>
         `).join('');
 
-        // Update counter
         document.getElementById('toggleBtn').textContent = 
             `${isExpanded ? 'Hide' : 'Show'} Previous Responses (${responseHistory.length})`;
     }
 
-    // Show loading state
-    currentResponse.innerHTML = 'Getting help...';
+    currentResponse.innerHTML = '<div class="animate-pulse text-gray-400">Getting help...</div>';
 
     try {
         const response = await fetch('/api/help', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 helpType,
                 problem: {{{json problem}}},
@@ -275,33 +184,212 @@ async function getAIHelp(helpType) {
         const data = await response.json();
         currentResponse.innerHTML = data.response;
 
-        // Render LaTeX in both current and previous responses
         if (window.renderMathInElement) {
-            renderMathInElement(currentResponse, {
-                delimiters: [
-                    {left: "\\[", right: "\\]", display: true},
-                    {left: "\\(", right: "\\)", display: false},
-                    {left: "$", right: "$", display: false},
-                    {left: "$$", right: "$$", display: true}
-                ],
-                throwOnError: false
-            });
-            
+            renderMathInElement(currentResponse);
             if (responseHistory.length > 0) {
-                renderMathInElement(document.getElementById('previousResponses'), {
-                    delimiters: [
-                        {left: "\\[", right: "\\]", display: true},
-                        {left: "\\(", right: "\\)", display: false},
-                        {left: "$", right: "$", display: false},
-                        {left: "$$", right: "$$", display: true}
-                    ],
-                    throwOnError: false
-                });
+                renderMathInElement(document.getElementById('previousResponses'));
             }
         }
     } catch (error) {
         console.error('Error:', error);
-        currentResponse.innerHTML = 'Sorry, there was an error getting help.';
+        currentResponse.innerHTML = '<div class="text-red-500">Sorry, there was an error getting help.</div>';
+    }
+}
+</script> --}}
+
+<script>
+let responseHistory = [];
+let isExpanded = false;
+let currentProblemId = '{{topicName}}/{{problemId}}';
+
+// Add debounce function for performance
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Function to render LaTeX in an element
+function renderLatexInElement(element) {
+    if (window.renderMathInElement) {
+        window.renderMathInElement(element, {
+            delimiters: [
+                {left: "\\[", right: "\\]", display: true},
+                {left: "\\(", right: "\\)", display: false},
+                {left: "$", right: "$", display: false},
+                {left: "$$", right: "$$", display: true},
+                {left: "\\begin{align}", right: "\\end{align}", display: true},
+                {left: "\\begin{align*}", right: "\\end{align*}", display: true},
+                {left: "\\begin{equation}", right: "\\end{equation}", display: true},
+                {left: "\\begin{equation*}", right: "\\end{equation*}", display: true},
+                {left: "\\begin{gather}", right: "\\end{gather}", display: true},
+                {left: "\\begin{gather*}", right: "\\end{gather*}", display: true}
+            ],
+            throwOnError: false,
+            trust: true,
+            strict: false,
+            macros: {
+                "\\eqref": "\\href{#1}{}",   // Handle \eqref
+                "\\label": "\\href{#1}{}",    // Handle \label
+                "\\ref": "\\href{#1}{}"       // Handle \ref
+            }
+        });
+    }
+}
+
+// Setup real-time LaTeX rendering for work area
+function setupWorkArea() {
+    const workArea = document.getElementById('mainWorkArea');
+    const previewArea = document.createElement('div');
+    previewArea.id = 'workPreview';
+    previewArea.className = 'mt-4 p-4 bg-gray-900 rounded-lg latex-content';
+    workArea.parentNode.insertBefore(previewArea, workArea.nextSibling);
+
+    const updatePreview = debounce(() => {
+        previewArea.innerHTML = workArea.value;
+        renderLatexInElement(previewArea);
+    }, 300);
+
+    workArea.addEventListener('input', updatePreview);
+}
+
+function clearHistory() {
+    responseHistory = [];
+    document.getElementById('previousResponses').innerHTML = '';
+    document.getElementById('currentResponse').innerHTML = '';
+    document.getElementById('toggleBtn').textContent = 'Show Previous Responses (0)';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    clearHistory();
+    setupWorkArea();
+});
+
+function togglePreviousResponses() {
+    const previousResponses = document.getElementById('previousResponses');
+    const toggleBtn = document.getElementById('toggleBtn');
+    isExpanded = !isExpanded;
+    
+    previousResponses.classList.toggle('show');
+    toggleBtn.textContent = `${isExpanded ? 'Hide' : 'Show'} Previous Responses (${responseHistory.length})`;
+}
+
+async function getAIHelp(helpType) {
+    const mainWorkArea = document.getElementById('mainWorkArea');
+    const helpQuery = document.getElementById('helpQuery');
+    const currentResponse = document.getElementById('currentResponse');
+    const problemId = '{{topicName}}/{{problemId}}';
+
+    if (problemId !== currentProblemId) {
+        currentProblemId = problemId;
+        clearHistory();
+    }
+
+    if (currentResponse.innerHTML.trim()) {
+        responseHistory.push({
+            content: currentResponse.innerHTML,
+            type: helpType,
+            timestamp: new Date().toLocaleTimeString()
+        });
+
+        const previousResponses = document.getElementById('previousResponses');
+        previousResponses.innerHTML = responseHistory.map(response => `
+            <div class="response-entry">
+                <div class="response-type">${response.type} - ${response.timestamp}</div>
+                <div class="response-content latex-content">${response.content}</div>
+            </div>
+        `).join('');
+
+        // Render LaTeX in all responses
+        document.querySelectorAll('.response-entry .latex-content').forEach(renderLatexInElement);
+
+        document.getElementById('toggleBtn').textContent = 
+            `${isExpanded ? 'Hide' : 'Show'} Previous Responses (${responseHistory.length})`;
+    }
+
+    currentResponse.innerHTML = '<div class="animate-pulse text-gray-400">Getting help...</div>';
+
+    try {
+        const response = await fetch('/api/help', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                helpType,
+                problem: {{{json problem}}},
+                work: mainWorkArea.value,
+                query: helpQuery.value,
+                hintHistory: helpType === 'hint' ? responseHistory
+                    .filter(r => r.type === 'hint')
+                    .map(r => ({ content: r.content })) : []
+            })
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        const data = await response.json();
+        currentResponse.innerHTML = data.response;
+
+        // Render LaTeX in current response
+        renderLatexInElement(currentResponse);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        currentResponse.innerHTML = '<div class="text-red-500">Sorry, there was an error getting help.</div>';
     }
 }
 </script>
+
+{{!-- Add these additional styles --}}
+<style>
+/* Work preview area */
+#workPreview {
+    min-height: 3rem;
+    border: 1px solid #374151;
+}
+
+#workPreview:empty {
+    display: none;
+}
+
+/* Enhanced LaTeX styles */
+.latex-content {
+    font-size: 1.1em;
+    line-height: 1.6;
+}
+
+.latex-content .katex { 
+    color: #e5e7eb; 
+    font-size: 1.1em;
+}
+
+.latex-content .katex-display { 
+    margin: 1em 0; 
+    padding: 1em 0; 
+    overflow-x: auto; 
+}
+
+/* Response styling */
+.response-entry {
+    background: #1f2937;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid #6366f1;
+}
+
+.response-entry .response-type {
+    color: #9ca3af;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.response-entry .response-content {
+    color: #e5e7eb;
+}
+</style>

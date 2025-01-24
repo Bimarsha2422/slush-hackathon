@@ -1,30 +1,65 @@
 {{!-- src/views/layouts/main.hbs --}}
 <!DOCTYPE html>
-<html>
+<html lang="en" class="dark h-full">
 <head>
     <meta charset="utf-8">
-    <title>{{title}}</title>
-    <link rel="stylesheet" href="/css/styles.css">
-    <!-- Add KaTeX CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}} - Math Learning Platform</title>
+    
+    {{!-- Tailwind CSS --}}
+    <link rel="stylesheet" href="/css/output.css">
+    
+    {{!-- Inter Font --}}
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    
+    {{!-- KaTeX --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-    <!-- Add KaTeX JS -->
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-    <!-- Add auto-render extension -->
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMath()"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/mhchem.min.js"></script>
 </head>
-<body>
-    <header>
-        <h1>Math Learning Platform</h1>
-    </header>
+<body class="h-full bg-gray-900">
+    {{!-- Navigation --}}
+    <nav class="bg-gray-800 border-b border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    {{!-- Logo --}}
+                    <a href="/" class="flex items-center text-xl font-bold text-white hover:text-indigo-400 transition-colors">
+                        <svg class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        Math Learning
+                    </a>
 
+                    {{!-- Only show "Return Home" if not on home page --}}
+                    {{#unless isHome}}
+                    <a href="/" class="ml-8 text-sm font-medium text-gray-300 hover:text-white transition-colors">
+                        ← Return Home
+                    </a>
+                    {{/unless}}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {{!-- Main Content --}}
     <main>
         {{{body}}}
     </main>
 
-    <footer>
-        <p>© 2024 Math Learning Platform</p>
+    {{!-- Footer --}}
+    <footer class="bg-gray-800 border-t border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <p class="text-center text-gray-400">© 2024 Math Learning Platform</p>
+        </div>
     </footer>
 
+    {{!-- KaTeX Rendering --}}
     <script>
         function renderMath() {
             renderMathInElement(document.body, {

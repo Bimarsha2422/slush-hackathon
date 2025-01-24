@@ -4,18 +4,19 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
 
-
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const router = express.Router();
 
-async function getTopicProblems(topicName) {
+const ITEMS_PER_PAGE = 10;
+
+async function getTopicProblems(topicName, options = {}) {
+    const { page = 1, level = 'all', sort = 'level' } = options;
     const topicPath = path.join(__dirname, '../../MATH/train', topicName);
+    
     try {
         const files = await fs.readdir(topicPath);
-        const problems = await Promise.all(
+        let problems = await Promise.all(
             files
                 .filter(file => file.endsWith('.json'))
                 .map(async (file) => {
@@ -28,25 +29,102 @@ async function getTopicProblems(topicName) {
                     };
                 })
         );
-        return problems;
+
+        // Extract numeric level for sorting
+        problems = problems.map(p => ({
+            ...p,
+            numericLevel: parseInt(p.level.replace('Level ', '')) || 0
+        }));
+
+        // Filter by level if specified
+        if (level !== 'all') {
+            problems = problems.filter(p => p.numericLevel === parseInt(level));
+        }
+
+        // Sort problems
+        problems.sort((a, b) => {
+            if (sort === 'level') {
+                return a.numericLevel - b.numericLevel || parseInt(a.id) - parseInt(b.id);
+            }
+            return parseInt(a.id) - parseInt(b.id);
+        });
+
+        // Get unique levels for the filter dropdown
+        const uniqueLevels = [...new Set(problems.map(p => p.numericLevel))].sort((a, b) => a - b);
+
+        // Calculate pagination
+        const totalItems = problems.length;
+        const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+        const currentPage = Math.max(1, Math.min(page, totalPages));
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const paginatedProblems = problems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+        // Calculate the starting problem number for the current page
+        const startNumber = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+        paginatedProblems.forEach((problem, index) => {
+            problem.displayNumber = startNumber + index;
+        });
+
+        return {
+            problems: paginatedProblems,
+            pagination: {
+                currentPage,
+                totalPages,
+                totalItems,
+                hasNextPage: currentPage < totalPages,
+                hasPrevPage: currentPage > 1
+            },
+            filters: {
+                currentLevel: level,
+                availableLevels: uniqueLevels,
+                currentSort: sort
+            }
+        };
     } catch (error) {
         console.error(`Error reading problems for topic ${topicName}:`, error);
-        return [];
+        return {
+            problems: [],
+            pagination: {
+                currentPage: 1,
+                totalPages: 0,
+                totalItems: 0,
+                hasNextPage: false,
+                hasPrevPage: false
+            },
+            filters: {
+                currentLevel: level,
+                availableLevels: [],
+                currentSort: sort
+            }
+        };
     }
 }
 
 router.get('/:topicName', async (req, res) => {
     const { topicName } = req.params;
+    const { page = 1, level = 'all', sort = 'level' } = req.query;
+
     try {
-        const problems = await getTopicProblems(topicName);
+        const { problems, pagination, filters } = await getTopicProblems(topicName, {
+            page: parseInt(page),
+            level,
+            sort
+        });
+        
         res.render('topic', {
-            title: topicName.replace(/_/g, ' ').split(' ')
+            title: topicName.replace(/_/g, ' ')
+                .split(' ')
                 .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                 .join(' '),
             topicName,
-            problems
+            problems,
+            pagination,
+            filters,
+            currentUrl: `/topics/${topicName}`,
+            query: req.query
         });
     } catch (error) {
+        console.error('Error loading topic:', error);
         res.status(500).render('error', {
             message: 'Error loading topic'
         });
