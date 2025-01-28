@@ -216,34 +216,14 @@ function debounce(func, wait) {
 }
 
 // Function to render LaTeX in an element
+// Replace the renderLatexInElement function
 function renderLatexInElement(element) {
-    if (window.renderMathInElement) {
-        window.renderMathInElement(element, {
-            delimiters: [
-                {left: "\\[", right: "\\]", display: true},
-                {left: "\\(", right: "\\)", display: false},
-                {left: "$", right: "$", display: false},
-                {left: "$$", right: "$$", display: true},
-                {left: "\\begin{align}", right: "\\end{align}", display: true},
-                {left: "\\begin{align*}", right: "\\end{align*}", display: true},
-                {left: "\\begin{equation}", right: "\\end{equation}", display: true},
-                {left: "\\begin{equation*}", right: "\\end{equation*}", display: true},
-                {left: "\\begin{gather}", right: "\\end{gather}", display: true},
-                {left: "\\begin{gather*}", right: "\\end{gather*}", display: true}
-            ],
-            throwOnError: false,
-            trust: true,
-            strict: false,
-            macros: {
-                "\\eqref": "\\href{#1}{}",   // Handle \eqref
-                "\\label": "\\href{#1}{}",    // Handle \label
-                "\\ref": "\\href{#1}{}"       // Handle \ref
-            }
-        });
+    if (window.MathJax) {
+        MathJax.typesetPromise([element]).catch((err) => console.error('MathJax error:', err));
     }
 }
 
-// Setup real-time LaTeX rendering for work area
+// Update the work area preview function
 function setupWorkArea() {
     const workArea = document.getElementById('mainWorkArea');
     const previewArea = document.createElement('div');
@@ -258,7 +238,6 @@ function setupWorkArea() {
 
     workArea.addEventListener('input', updatePreview);
 }
-
 function clearHistory() {
     responseHistory = [];
     document.getElementById('previousResponses').innerHTML = '';

@@ -65,32 +65,17 @@
         </div>
 
         {{!-- Pagination --}}
+       {{!-- Replace the pagination section in your topic.hbs --}}
         {{#if pagination.totalPages}}
-        <div class="mt-8 flex items-center justify-center space-x-1 pb-8">
+        <div class="mt-8 flex items-center justify-center space-x-2 pb-8">
             {{#if pagination.hasPrevPage}}
-            <a href="{{buildUrl currentUrl (merge query (object page='1'))}}" 
-               class="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-800 rounded-md hover:bg-gray-700">
-                First
-            </a>
-            <a href="{{buildUrl currentUrl (merge query (object page=(subtract pagination.currentPage 1)))}}" 
-               class="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-800 rounded-md hover:bg-gray-700">
-                Previous
-            </a>
+            <a href="{{pageUrl currentUrl 1 filters.currentLevel}}" class="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-800 rounded-md hover:bg-gray-700">First</a>
+            <a href="{{pageUrl currentUrl (subtract pagination.currentPage 1) filters.currentLevel}}" class="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-800 rounded-md hover:bg-gray-700">Previous</a>
             {{/if}}
-
-            <span class="px-4 py-2 text-sm font-medium text-white bg-indigo-500 rounded-md">
-                Page {{pagination.currentPage}} of {{pagination.totalPages}}
-            </span>
-
+            <span class="px-4 py-2 text-sm font-medium text-white bg-indigo-500 rounded-md">Page {{pagination.currentPage}} of {{pagination.totalPages}}</span>
             {{#if pagination.hasNextPage}}
-            <a href="{{buildUrl currentUrl (merge query (object page=(add pagination.currentPage 1)))}}" 
-               class="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-800 rounded-md hover:bg-gray-700">
-                Next
-            </a>
-            <a href="{{buildUrl currentUrl (merge query (object page=pagination.totalPages))}}" 
-               class="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-800 rounded-md hover:bg-gray-700">
-                Last
-            </a>
+            <a href="{{pageUrl currentUrl (add pagination.currentPage 1) filters.currentLevel}}" class="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-800 rounded-md hover:bg-gray-700">Next</a>
+            <a href="{{pageUrl currentUrl pagination.totalPages filters.currentLevel}}" class="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-800 rounded-md hover:bg-gray-700">Last</a>
             {{/if}}
         </div>
         {{/if}}

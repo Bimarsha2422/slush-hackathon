@@ -47,10 +47,21 @@ app.engine('hbs', engine({
         buildUrl: function(baseUrl, params) {
             const searchParams = new URLSearchParams();
             for (const [key, value] of Object.entries(params)) {
-                searchParams.append(key, value);
+                if (value !== undefined && value !== null) {
+                    searchParams.append(key, value);
+                }
             }
-            return `${baseUrl}?${searchParams.toString()}`;
+            const queryString = searchParams.toString();
+            return queryString ? `${baseUrl}?${queryString}` : baseUrl;
         },
+        pageUrl: function(currentUrl, page, currentLevel) {
+            const params = new URLSearchParams();
+            params.set('page', page);
+            if (currentLevel && currentLevel !== 'all') {
+                params.set('level', currentLevel);
+            }
+            return `${currentUrl}?${params.toString()}`;
+        }, 
         object: function() {
             const args = Array.from(arguments);
             const obj = {};
@@ -92,16 +103,30 @@ app.post('/api/help', async (req, res) => {
         const systemMessages = {
             hint: `You are helping a student solve a math problem. Give one brief, focused hint.
                   Be concise but make sure your explanation is complete.
+                  Act as a Socrates-style tutor. NEVER give direct answers.
+                - Ask 2-3 short, guided questions maximum
+                - Focus on identifying missing conceptual links
+                - Example: "What relationship between X and Y are we missing here?"
+                - Example: "Which theorem applies to this type of equation?"
+                - NEVER solve any part of the problem
+                - Prevent solution revelation by 3 layers of abstraction
+                - Format: Always end with a question mark
+                - Use LaTeX ONLY when referencing original problem's notation
                   Always use LaTeX formatting for mathematical expressions:
                   - Use \\( and \\) for inline math
                   - Use \\[ and \\] for displayed math
                   - Use $ only if already present in the original problem
                   - DO NOT use \\begin{align}, \\begin{equation}, or similar environments
                   - Use simple line breaks and \\[ \\] for multiple lines instead
+                  
                   Previous hints given: ${hintHistory?.map(h => h.content).join(' → ') || 'None'}`,
             
             nextStep: `You are helping a student solve a math problem. Suggest the next step.
                       Be concise but do not give out the full solution. Only give the next mini-step. 
+                      Guide to the immediate next technical step.
+                    - Provide ONLY the next mathematical operation/step
+                    - Example: "Apply distributive property to the left side"
+                    - Example: "Isolate the quadratic term"
                       Always use LaTeX formatting:
                       - Use \\( and \\) for inline math
                       - Use \\[ and \\] for displayed math
@@ -117,9 +142,19 @@ app.post('/api/help', async (req, res) => {
                       - Use $ only if already present in the original problem
                       - DO NOT use \\begin{align}, \\begin{equation}, or similar environments
                       - Use simple line breaks and \\[ \\] for multiple lines instead
-                      If work seems partial, briefly confirm correctness and indicate next step.
+                      If work seems partial, briefly confirm correctness and acknowledge that the solution needs to be completed.
                       If work seems complete, verify the answer concisely.
-                      Focus on key points rather than lengthy explanations.`,
+                      Focus on key points rather than lengthy explanations.
+                      DO NOT SUGGEST NEXT STEPS. JUST VERIFY AND THAT IS IT. 
+                      Analyze the student's work to:
+                    1. CONFIRM CORRECT elements (be specific)
+                    2. IDENTIFY UNCLEAR/WRONG elements (be precise)
+                    3. EXPLAIN WHY elements are correct/incorrect
+                    4. NEVER SUGGEST next steps or solutions
+
+                    Rules:
+                    - Use "correct" only for verified right elements
+                    - Never use "should", "next", or "need to"`,
             
             improve: `You are improving a student's math solution. 
                      Write like a good student: clear, natural, and complete but not verbose.
@@ -130,7 +165,15 @@ app.post('/api/help', async (req, res) => {
                      - Directly give the solution without using phrases like here's the written solution. 
                      - DO NOT use \\begin{align}, \\begin{equation}, or similar environments
                      - Use simple line breaks and \\[ \\] for multiple lines instead
-                     Maintain mathematical rigor while keeping the tone natural.`
+
+                     Restructure the student's EXACT CONTENT into better format:
+                    1. Fix grammar/syntax errors
+                    2. Improve mathematical notation consistency
+                    3. Enhance visual organization
+                    4. PRESERVE ALL ORIGINAL CONTENT even if wrong
+                    - Never add explanations/fixes
+                    - Example: Convert run-on sentences to bullet points
+                    - Maintain original variable names/values`
         };
 
         let userMessage = `Problem: ${problem.problem}\n\n`;
