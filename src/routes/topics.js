@@ -16,7 +16,7 @@ async function getTopicProblems(topicName, options = {}) {
     
     try {
         const files = await fs.readdir(topicPath);
-        let problems = await Promise.all(
+        let allProblems = await Promise.all(
             files
                 .filter(file => file.endsWith('.json'))
                 .map(async (file) => {
@@ -30,15 +30,19 @@ async function getTopicProblems(topicName, options = {}) {
                 })
         );
 
-        // Extract numeric level for sorting
-        problems = problems.map(p => ({
+        // Extract numeric level for sorting for ALL problems
+        allProblems = allProblems.map(p => ({
             ...p,
             numericLevel: parseInt(p.level.replace('Level ', '')) || 0
         }));
 
+        // Get unique levels BEFORE filtering
+        const uniqueLevels = [...new Set(allProblems.map(p => p.numericLevel))].sort((a, b) => a - b);
+
         // Filter by level if specified
+        let problems = allProblems;
         if (level !== 'all') {
-            problems = problems.filter(p => p.numericLevel === parseInt(level));
+            problems = allProblems.filter(p => p.numericLevel === parseInt(level));
         }
 
         // Sort problems
@@ -48,9 +52,6 @@ async function getTopicProblems(topicName, options = {}) {
             }
             return parseInt(a.id) - parseInt(b.id);
         });
-
-        // Get unique levels for the filter dropdown
-        const uniqueLevels = [...new Set(problems.map(p => p.numericLevel))].sort((a, b) => a - b);
 
         // Calculate pagination
         const totalItems = problems.length;
@@ -76,7 +77,7 @@ async function getTopicProblems(topicName, options = {}) {
             },
             filters: {
                 currentLevel: level,
-                availableLevels: uniqueLevels,
+                availableLevels: uniqueLevels,  // This now contains ALL levels
                 currentSort: sort
             }
         };
