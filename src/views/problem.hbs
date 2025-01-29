@@ -1,169 +1,374 @@
-// src/routes/topics.js
-import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs/promises';
+{{!-- src/views/problem.hbs --}}
+<div class="min-h-screen bg-gray-900">
+    {{!-- Problem Header --}}
+    <div class="border-b border-gray-700 bg-gray-800/50">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center gap-x-3">
+                <a href="/topics/{{topicName}}" class="text-sm font-medium text-gray-400 hover:text-white transition-colors">← Back to {{title}}</a>
+                <span class="text-gray-600">|</span>
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center rounded-md bg-indigo-400/10 px-2 py-1 text-xs font-medium text-indigo-400 ring-1 ring-inset ring-indigo-400/20">{{problem.type}}</span>
+                    <span class="inline-flex items-center rounded-md bg-purple-400/10 px-2 py-1 text-xs font-medium text-purple-400 ring-1 ring-inset ring-purple-400/20">{{problem.level}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const router = express.Router();
+    {{!-- Main Content --}}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {{!-- Left Column: Problem and Work Area --}}
+            <div class="space-y-6">
+                {{!-- Problem Statement --}}
+                <div class="bg-gray-800 rounded-lg p-6 shadow-lg">
+                    <h3 class="text-lg font-medium text-white mb-4">Problem Statement</h3>
+                    <div class="latex-content prose prose-invert max-w-none">{{{problem.problem}}}</div>
+                </div>
 
-const ITEMS_PER_PAGE = 10;
+                {{!-- Work Area --}}
+                <div class="bg-gray-800 rounded-lg p-6 shadow-lg">
+                    <h3 class="text-lg font-medium text-white mb-4">Your Solution</h3>
+                    <textarea id="mainWorkArea" 
+                              class="w-full h-64 bg-gray-900 text-gray-100 rounded-lg p-4 border border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                              placeholder="Write your solution steps here..."></textarea>
+                </div>
+            </div>
 
-// Helper to get the numeric value of a level
-function getLevelNumber(level) {
-    return parseInt(level.replace('Level ', '')) || 0;
+            {{!-- Right Column: Help System --}}
+            <div class="space-y-6">
+                {{!-- Help Query --}}
+                <div class="bg-gray-800 rounded-lg p-6 shadow-lg">
+                    <h3 class="text-lg font-medium text-white mb-4">Need Help?</h3>
+                    <textarea id="helpQuery" 
+                              class="w-full h-24 bg-gray-900 text-gray-100 rounded-lg p-4 border border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 mb-4"
+                              placeholder="Ask a specific question or describe where you're stuck..."></textarea>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <button onclick="getAIHelp('hint')" 
+                                class="inline-flex items-center justify-center px-4 py-2 rounded-md bg-indigo-500 text-white hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            💡 Hint
+                        </button>
+                        <button onclick="getAIHelp('nextStep')" 
+                                class="inline-flex items-center justify-center px-4 py-2 rounded-md bg-indigo-500 text-white hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            ➡️ Next Step
+                        </button>
+                        <button onclick="getAIHelp('validate')" 
+                                class="inline-flex items-center justify-center px-4 py-2 rounded-md bg-indigo-500 text-white hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            ✅ Verify
+                        </button>
+                        <button onclick="getAIHelp('improve')" 
+                                class="inline-flex items-center justify-center px-4 py-2 rounded-md bg-indigo-500 text-white hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            📝 Improve
+                        </button>
+                    </div>
+                </div>
+
+                {{!-- Response History --}}
+                <div class="bg-gray-800 rounded-lg p-6 shadow-lg">
+                    <button id="toggleBtn" onclick="togglePreviousResponses()" 
+                            class="w-full text-left px-4 py-2 rounded-md bg-gray-700 text-gray-300 hover:bg-gray-600 mb-4">
+                        Show Previous Responses (0)
+                    </button>
+                    
+                    <div id="previousResponses" class="space-y-4 hidden">
+                        {{!-- Previous responses will be inserted here --}}
+                    </div>
+
+                    <div id="currentResponse" class="text-gray-300 latex-content prose prose-invert max-w-none">
+                        {{!-- Current response will be shown here --}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Custom styles for LaTeX content */
+.latex-content .katex { color: #e5e7eb; }
+.latex-content .katex-display { margin: 1em 0; padding: 1em 0; overflow-x: auto; }
+.latex-content::-webkit-scrollbar { height: 4px; }
+.latex-content::-webkit-scrollbar-track { background: #374151; }
+.latex-content::-webkit-scrollbar-thumb { background: #4B5563; border-radius: 2px; }
+
+/* Transition for response history */
+#previousResponses { transition: all 0.3s ease-in-out; }
+#previousResponses.show { display: block !important; }
+
+/* Response entry styling */
+.response-entry {
+    @apply bg-gray-700 rounded-lg p-4 border-l-4 border-indigo-500;
 }
 
-// Helper to get previous level's problem count
-async function getPreviousLevelsProblemCount(topicPath, currentLevel) {
-    try {
-        const files = await fs.readdir(topicPath);
-        const allProblems = await Promise.all(
-            files
-                .filter(file => file.endsWith('.json'))
-                .map(async (file) => {
-                    const content = await fs.readFile(path.join(topicPath, file), 'utf8');
-                    return JSON.parse(content);
-                })
-        );
-
-        return allProblems.filter(p => getLevelNumber(p.level) < currentLevel).length;
-    } catch (error) {
-        console.error('Error counting previous problems:', error);
-        return 0;
-    }
+.response-entry .response-type {
+    @apply text-xs text-gray-400 mb-2;
 }
 
-async function getTopicProblems(topicName, options = {}) {
-    const { page = 1, level = 'all', sort = 'level' } = options;
-    const topicPath = path.join(__dirname, '../../MATH/train', topicName);
+.response-entry .response-content {
+    @apply text-gray-300;
+}
+</style>
+{{!-- 
+<script>
+let responseHistory = [];
+let isExpanded = false;
+let currentProblemId = '{{topicName}}/{{problemId}}';
+
+function clearHistory() {
+    responseHistory = [];
+    document.getElementById('previousResponses').innerHTML = '';
+    document.getElementById('currentResponse').innerHTML = '';
+    document.getElementById('toggleBtn').textContent = 'Show Previous Responses (0)';
+}
+
+document.addEventListener('DOMContentLoaded', clearHistory);
+
+function togglePreviousResponses() {
+    const previousResponses = document.getElementById('previousResponses');
+    const toggleBtn = document.getElementById('toggleBtn');
+    isExpanded = !isExpanded;
     
-    try {
-        console.log('Reading directory:', topicPath);
-        const files = await fs.readdir(topicPath);
-        
-        // First, get all problems
-        let problems = await Promise.all(
-            files
-                .filter(file => file.endsWith('.json'))
-                .map(async (file) => {
-                    const filePath = path.join(topicPath, file);
-                    const content = await fs.readFile(filePath, 'utf8');
-                    const problem = JSON.parse(content);
-                    return {
-                        ...problem,
-                        id: path.basename(file, '.json'),
-                        numericLevel: getLevelNumber(problem.level)
-                    };
-                })
-        );
+    previousResponses.classList.toggle('show');
+    toggleBtn.textContent = `${isExpanded ? 'Hide' : 'Show'} Previous Responses (${responseHistory.length})`;
+}
 
-        // Sort all problems by level and then by ID
-        problems.sort((a, b) => {
-            if (a.numericLevel !== b.numericLevel) {
-                return a.numericLevel - b.numericLevel;
-            }
-            return parseInt(a.id) - parseInt(b.id);
+async function getAIHelp(helpType) {
+    const mainWorkArea = document.getElementById('mainWorkArea');
+    const helpQuery = document.getElementById('helpQuery');
+    const currentResponse = document.getElementById('currentResponse');
+    const problemId = '{{topicName}}/{{problemId}}';
+
+    if (problemId !== currentProblemId) {
+        currentProblemId = problemId;
+        clearHistory();
+    }
+
+    if (currentResponse.innerHTML.trim()) {
+        responseHistory.push({
+            content: currentResponse.innerHTML,
+            type: helpType,
+            timestamp: new Date().toLocaleTimeString()
         });
 
-        // Filter by level if specified
-        let filteredProblems = problems;
-        if (level !== 'all') {
-            const numericLevel = parseInt(level);
-            const previousCount = await getPreviousLevelsProblemCount(topicPath, numericLevel);
-            
-            filteredProblems = problems.filter(p => p.numericLevel === numericLevel);
-            filteredProblems = filteredProblems.map((p, idx) => ({
-                ...p,
-                displayNumber: previousCount + idx + 1
-            }));
-        } else {
-            filteredProblems = problems.map((p, idx) => ({
-                ...p,
-                displayNumber: idx + 1
-            }));
+        const previousResponses = document.getElementById('previousResponses');
+        previousResponses.innerHTML = responseHistory.map(response => `
+            <div class="response-entry">
+                <div class="response-type">${response.type} - ${response.timestamp}</div>
+                <div class="response-content">${response.content}</div>
+            </div>
+        `).join('');
+
+        document.getElementById('toggleBtn').textContent = 
+            `${isExpanded ? 'Hide' : 'Show'} Previous Responses (${responseHistory.length})`;
+    }
+
+    currentResponse.innerHTML = '<div class="animate-pulse text-gray-400">Getting help...</div>';
+
+    try {
+        const response = await fetch('/api/help', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                helpType,
+                problem: {{{json problem}}},
+                work: mainWorkArea.value,
+                query: helpQuery.value,
+                hintHistory: helpType === 'hint' ? responseHistory
+                    .filter(r => r.type === 'hint')
+                    .map(r => ({ content: r.content })) : []
+            })
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        const data = await response.json();
+        currentResponse.innerHTML = data.response;
+
+        if (window.renderMathInElement) {
+            renderMathInElement(currentResponse);
+            if (responseHistory.length > 0) {
+                renderMathInElement(document.getElementById('previousResponses'));
+            }
         }
-
-        // Get unique levels for the filter dropdown
-        const uniqueLevels = [...new Set(problems.map(p => p.numericLevel))].sort((a, b) => a - b);
-
-        // Calculate pagination
-        const totalItems = filteredProblems.length;
-        const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-        const currentPage = Math.max(1, Math.min(page, totalPages));
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        const paginatedProblems = filteredProblems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-        console.log('Paginated problems:', paginatedProblems.map(p => ({
-            level: p.level,
-            displayNumber: p.displayNumber
-        })));
-
-        return {
-            problems: paginatedProblems,
-            pagination: {
-                currentPage,
-                totalPages,
-                totalItems,
-                hasNextPage: currentPage < totalPages,
-                hasPrevPage: currentPage > 1
-            },
-            filters: {
-                currentLevel: level,
-                availableLevels: uniqueLevels,
-                currentSort: sort
-            }
-        };
     } catch (error) {
-        console.error(`Error reading problems for topic ${topicName}:`, error);
-        return {
-            problems: [],
-            pagination: {
-                currentPage: 1,
-                totalPages: 0,
-                totalItems: 0,
-                hasNextPage: false,
-                hasPrevPage: false
-            },
-            filters: {
-                currentLevel: level,
-                availableLevels: [],
-                currentSort: sort
-            }
+        console.error('Error:', error);
+        currentResponse.innerHTML = '<div class="text-red-500">Sorry, there was an error getting help.</div>';
+    }
+}
+</script> --}}
+
+<script>
+let responseHistory = [];
+let isExpanded = false;
+let currentProblemId = '{{topicName}}/{{problemId}}';
+
+// Add debounce function for performance
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
         };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Function to render LaTeX in an element
+// Replace the renderLatexInElement function
+function renderLatexInElement(element) {
+    if (window.MathJax) {
+        MathJax.typesetPromise([element]).catch((err) => console.error('MathJax error:', err));
     }
 }
 
-router.get('/:topicName', async (req, res) => {
-    const { topicName } = req.params;
-    const { page = 1, level = 'all', sort = 'level' } = req.query;
+// Update the work area preview function
+function setupWorkArea() {
+    const workArea = document.getElementById('mainWorkArea');
+    const previewArea = document.createElement('div');
+    previewArea.id = 'workPreview';
+    previewArea.className = 'mt-4 p-4 bg-gray-900 rounded-lg latex-content';
+    workArea.parentNode.insertBefore(previewArea, workArea.nextSibling);
 
-    try {
-        const { problems, pagination, filters } = await getTopicProblems(topicName, {
-            page: parseInt(page),
-            level,
-            sort
-        });
-        
-        res.render('topic', {
-            title: topicName.replace(/_/g, ' ')
-                .split(' ')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' '),
-            topicName,
-            problems,
-            pagination,
-            filters,
-            currentUrl: `/topics/${topicName}`,
-            query: req.query
-        });
-    } catch (error) {
-        console.error('Error loading topic:', error);
-        res.status(500).render('error', {
-            message: 'Error loading topic'
-        });
-    }
+    const updatePreview = debounce(() => {
+        previewArea.innerHTML = workArea.value;
+        renderLatexInElement(previewArea);
+    }, 300);
+
+    workArea.addEventListener('input', updatePreview);
+}
+function clearHistory() {
+    responseHistory = [];
+    document.getElementById('previousResponses').innerHTML = '';
+    document.getElementById('currentResponse').innerHTML = '';
+    document.getElementById('toggleBtn').textContent = 'Show Previous Responses (0)';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    clearHistory();
+    setupWorkArea();
 });
 
-export default router;
+function togglePreviousResponses() {
+    const previousResponses = document.getElementById('previousResponses');
+    const toggleBtn = document.getElementById('toggleBtn');
+    isExpanded = !isExpanded;
+    
+    previousResponses.classList.toggle('show');
+    toggleBtn.textContent = `${isExpanded ? 'Hide' : 'Show'} Previous Responses (${responseHistory.length})`;
+}
+
+async function getAIHelp(helpType) {
+    const mainWorkArea = document.getElementById('mainWorkArea');
+    const helpQuery = document.getElementById('helpQuery');
+    const currentResponse = document.getElementById('currentResponse');
+    const problemId = '{{topicName}}/{{problemId}}';
+
+    if (problemId !== currentProblemId) {
+        currentProblemId = problemId;
+        clearHistory();
+    }
+
+    if (currentResponse.innerHTML.trim()) {
+        responseHistory.push({
+            content: currentResponse.innerHTML,
+            type: helpType,
+            timestamp: new Date().toLocaleTimeString()
+        });
+
+        const previousResponses = document.getElementById('previousResponses');
+        previousResponses.innerHTML = responseHistory.map(response => `
+            <div class="response-entry">
+                <div class="response-type">${response.type} - ${response.timestamp}</div>
+                <div class="response-content latex-content">${response.content}</div>
+            </div>
+        `).join('');
+
+        // Render LaTeX in all responses
+        document.querySelectorAll('.response-entry .latex-content').forEach(renderLatexInElement);
+
+        document.getElementById('toggleBtn').textContent = 
+            `${isExpanded ? 'Hide' : 'Show'} Previous Responses (${responseHistory.length})`;
+    }
+
+    currentResponse.innerHTML = '<div class="animate-pulse text-gray-400">Getting help...</div>';
+
+    try {
+        const response = await fetch('/api/help', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                helpType,
+                problem: {{{json problem}}},
+                work: mainWorkArea.value,
+                query: helpQuery.value,
+                hintHistory: helpType === 'hint' ? responseHistory
+                    .filter(r => r.type === 'hint')
+                    .map(r => ({ content: r.content })) : []
+            })
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        const data = await response.json();
+        currentResponse.innerHTML = data.response;
+
+        // Render LaTeX in current response
+        renderLatexInElement(currentResponse);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        currentResponse.innerHTML = '<div class="text-red-500">Sorry, there was an error getting help.</div>';
+    }
+}
+</script>
+
+{{!-- Add these additional styles --}}
+<style>
+/* Work preview area */
+#workPreview {
+    min-height: 3rem;
+    border: 1px solid #374151;
+}
+
+#workPreview:empty {
+    display: none;
+}
+
+/* Enhanced LaTeX styles */
+.latex-content {
+    font-size: 1.1em;
+    line-height: 1.6;
+}
+
+.latex-content .katex { 
+    color: #e5e7eb; 
+    font-size: 1.1em;
+}
+
+.latex-content .katex-display { 
+    margin: 1em 0; 
+    padding: 1em 0; 
+    overflow-x: auto; 
+}
+
+/* Response styling */
+.response-entry {
+    background: #1f2937;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid #6366f1;
+}
+
+.response-entry .response-type {
+    color: #9ca3af;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.response-entry .response-content {
+    color: #e5e7eb;
+}
+</style>
