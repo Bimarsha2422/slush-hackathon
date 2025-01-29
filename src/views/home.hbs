@@ -1,55 +1,78 @@
 {{!-- src/views/home.hbs --}}
 <div class="relative isolate overflow-hidden">
-    {{!-- Hero Section --}}
-    <div class="py-24 sm:py-32">
+    <!-- Floating Math Symbols Background -->
+    <div class="absolute inset-0 -z-10 overflow-hidden">
+        <div class="math-symbols">
+            <span class="symbol" style="--delay: 0s; --x: 10%; --y: 20%;">∫</span>
+            <span class="symbol" style="--delay: 2s; --x: 80%; --y: 15%;">π</span>
+            <span class="symbol" style="--delay: 4s; --x: 25%; --y: 70%;">Σ</span>
+            <span class="symbol" style="--delay: 1s; --x: 70%; --y: 65%;">θ</span>
+            <span class="symbol" style="--delay: 3s; --x: 40%; --y: 30%;">∞</span>
+            <span class="symbol" style="--delay: 5s; --x: 85%; --y: 80%;">√</span>
+            <span class="symbol" style="--delay: 2.5s; --x: 15%; --y: 85%;">∂</span>
+            <span class="symbol" style="--delay: 4.5s; --x: 60%; --y: 40%;">λ</span>
+        </div>
+    </div>
+
+    {{!-- Hero Section with Enhanced Title --}}
+    <div class="py-6 sm:py-8">
         <div class="mx-auto max-w-7xl px-6 lg:px-8">
             <div class="mx-auto max-w-2xl text-center">
-                <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl">Master Mathematics with AI Assistance</h1>
-                <p class="mt-6 text-lg leading-8 text-gray-300">
-                    Practice problems across various topics with instant AI feedback and guidance.
-                </p>
+                <div class="inline-block">
+                    <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl gradient-text">
+                        Master Mathematics
+                    </h1>
+                    <p class="mt-2 text-lg leading-8 text-gray-300 fade-in">
+                        Practice problems across various topics with instant AI feedback.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
 
-    {{!-- Topics Grid --}}
-    <div class="mx-auto max-w-7xl px-6 lg:px-8">
+    {{!-- Topics Grid with Math Symbol Decorations --}}
+    <div class="mx-auto max-w-7xl px-6 lg:px-8 mt-4">
         <div class="mx-auto max-w-2xl lg:max-w-4xl">
-            <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Mathematics Topics</h2>
-            <p class="mt-2 text-lg leading-8 text-gray-300">Choose a topic to begin practicing.</p>
-            <div class="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            
+            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {{!-- Algebra --}}
-                <a href="/topics/algebra" class="relative flex flex-col group rounded-2xl bg-gray-800 p-6 hover:bg-gray-700">
+                <a href="/topics/algebra" class="topic-card group">
+                    <div class="topic-symbol">∑</div>
                     <h3 class="text-base font-semibold leading-7 text-white">Algebra</h3>
                     <p class="mt-2 text-sm leading-6 text-gray-300">Master equations, functions, and algebraic reasoning.</p>
                 </a>
 
                 {{!-- Counting & Probability --}}
-                <a href="/topics/counting_and_probability" class="relative flex flex-col group rounded-2xl bg-gray-800 p-6 hover:bg-gray-700">
+                <a href="/topics/counting_and_probability" class="topic-card group">
+                    <div class="topic-symbol">P(A)</div>
                     <h3 class="text-base font-semibold leading-7 text-white">Counting & Probability</h3>
                     <p class="mt-2 text-sm leading-6 text-gray-300">Learn combinatorics and probability concepts.</p>
                 </a>
 
                 {{!-- Geometry --}}
-                <a href="/topics/geometry" class="relative flex flex-col group rounded-2xl bg-gray-800 p-6 hover:bg-gray-700">
+                <a href="/topics/geometry" class="topic-card group">
+                    <div class="topic-symbol">△</div>
                     <h3 class="text-base font-semibold leading-7 text-white">Geometry</h3>
                     <p class="mt-2 text-sm leading-6 text-gray-300">Explore shapes, spaces, and geometric principles.</p>
                 </a>
 
                 {{!-- Intermediate Algebra --}}
-                <a href="/topics/intermediate_algebra" class="relative flex flex-col group rounded-2xl bg-gray-800 p-6 hover:bg-gray-700">
+                <a href="/topics/intermediate_algebra" class="topic-card group">
+                    <div class="topic-symbol">∫</div>
                     <h3 class="text-base font-semibold leading-7 text-white">Intermediate Algebra</h3>
                     <p class="mt-2 text-sm leading-6 text-gray-300">Advance your algebraic problem-solving skills.</p>
                 </a>
 
                 {{!-- Number Theory --}}
-                <a href="/topics/number_theory" class="relative flex flex-col group rounded-2xl bg-gray-800 p-6 hover:bg-gray-700">
+                <a href="/topics/number_theory" class="topic-card group">
+                    <div class="topic-symbol">ℕ</div>
                     <h3 class="text-base font-semibold leading-7 text-white">Number Theory</h3>
                     <p class="mt-2 text-sm leading-6 text-gray-300">Study the properties and relationships of numbers.</p>
                 </a>
 
                 {{!-- Pre-Algebra --}}
-                <a href="/topics/prealgebra" class="relative flex flex-col group rounded-2xl bg-gray-800 p-6 hover:bg-gray-700">
+                <a href="/topics/prealgebra" class="topic-card group">
+                    <div class="topic-symbol">±</div>
                     <h3 class="text-base font-semibold leading-7 text-white">Pre-Algebra</h3>
                     <p class="mt-2 text-sm leading-6 text-gray-300">Build a strong foundation in basic mathematics.</p>
                 </a>
@@ -57,3 +80,94 @@
         </div>
     </div>
 </div>
+
+<style>
+/* Floating Math Symbols Animation */
+.math-symbols {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.symbol {
+    position: absolute;
+    font-size: 4rem;
+    color: rgba(79, 70, 229, 0.1);
+    animation: float 6s ease-in-out infinite;
+    animation-delay: var(--delay);
+    left: var(--x);
+    top: var(--y);
+    transform-origin: center;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+    25% {
+        transform: translate(10px, -10px) rotate(5deg);
+    }
+    50% {
+        transform: translate(0, -20px) rotate(0deg);
+    }
+    75% {
+        transform: translate(-10px, -10px) rotate(-5deg);
+    }
+}
+
+/* Enhanced Title Animation */
+.gradient-text {
+    background: linear-gradient(45deg, #4f46e5, #818cf8, #4f46e5);
+    background-size: 200% auto;
+    color: transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+    animation: gradient 3s ease infinite;
+}
+
+@keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Topic Cards with Math Symbols */
+.topic-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem;
+    background: rgba(31, 41, 55, 0.4);
+    border: 1px solid rgba(79, 70, 229, 0.2);
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.topic-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(79, 70, 229, 0.5);
+    box-shadow: 0 4px 20px rgba(79, 70, 229, 0.2);
+}
+
+.topic-symbol {
+    font-size: 2rem;
+    color: rgba(79, 70, 229, 0.6);
+    margin-bottom: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.topic-card:hover .topic-symbol {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.fade-in {
+    opacity: 0;
+    animation: fadeIn 1s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+</style>
