@@ -4,9 +4,15 @@ import express from 'express';
 import { engine } from 'express-handlebars';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import topicsRouter from './routes/topics.js';  // Note the .js extension
+import mongoose from 'mongoose';
+import session from 'express-session';
+import MongoStore from 'connect-mongo';
+import passport from 'passport';
+import { setupPassport } from './middleware/auth.js';
+import topicsRouter from './routes/topics.js';
 import problemsRouter from './routes/problems.js';
-import Groq from 'groq-sdk'; 
+import authRouter from './routes/auth.js';
+import Groq from 'groq-sdk';
 
 // ES modules require these to get __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -18,8 +24,50 @@ const client = new Groq({
     apiKey: process.env.GROQ_API_KEY
 });
 
-app.use(express.json()); 
+// Connect to MongoDB
+const mongoUrl = process.env.MONGODB_URI;
+mongoose.connect(mongoUrl)
+  .then(() => console.log('Connected to MongoDB Atlas'))
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+    if (err.code === 8000) {
+      console.error('Authentication failed. Please check your username and password');
+    }
+  });
 
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Debug middleware for POST requests
+app.use((req, res, next) => {
+    if (req.method === 'POST') {
+        console.log('POST Request Body:', req.body);
+    }
+    next();
+});
+
+// Session configuration
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: mongoUrl,
+        ttl: 24 * 60 * 60 // Session TTL (1 day)
+    }),
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000 // 1 day
+    }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
+setupPassport();
+
+// Handlebars setup
 app.engine('hbs', engine({
     extname: '.hbs',
     defaultLayout: 'main',
@@ -40,35 +88,6 @@ app.engine('hbs', engine({
         },
         toString: function(value) {
             return value.toString();
-        },
-        merge: function(obj1, obj2) {
-            return { ...obj1, ...obj2 };
-        },
-        buildUrl: function(baseUrl, params) {
-            const searchParams = new URLSearchParams();
-            for (const [key, value] of Object.entries(params)) {
-                if (value !== undefined && value !== null) {
-                    searchParams.append(key, value);
-                }
-            }
-            const queryString = searchParams.toString();
-            return queryString ? `${baseUrl}?${queryString}` : baseUrl;
-        },
-        pageUrl: function(currentUrl, page, currentLevel) {
-            const params = new URLSearchParams();
-            params.set('page', page);
-            if (currentLevel && currentLevel !== 'all') {
-                params.set('level', currentLevel);
-            }
-            return `${currentUrl}?${params.toString()}`;
-        }, 
-        object: function() {
-            const args = Array.from(arguments);
-            const obj = {};
-            for (let i = 0; i < args.length - 1; i += 2) {
-                obj[args[i]] = args[i + 1];
-            }
-            return obj;
         }
     }
 }));
@@ -78,132 +97,22 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Routes
+app.use('/auth', authRouter);
 app.use('/topics', topicsRouter);
 app.use('/problems', problemsRouter);
 
+// Root route
 app.get('/', (req, res) => {
+    if (!req.isAuthenticated()) {
+        return res.redirect('/auth/login');
+    }
     res.render('home', {
         title: 'Math Learning Platform',
-        isHome: true
+        isHome: true,
+        user: req.user
     });
-});
-
-
-app.post('/api/help', async (req, res) => {
-    const { helpType, problem, work, query, hintHistory } = req.body;
-    
-    // Handle empty work for validate and improve
-    if ((helpType === 'validate' || helpType === 'improve') && !work.trim()) {
-        return res.json({ 
-            response: "Please write your solution first before requesting feedback." 
-        });
-    }
-
-    try {
-        const systemMessages = {
-            hint: `You are helping a student solve a math problem. Give one brief, focused hint.
-                  Be concise but make sure your explanation is complete.
-                  Act as a Socrates-style tutor. NEVER give direct answers.
-                - Ask 2-3 short, guided questions maximum
-                - Focus on identifying missing conceptual links
-                - Example: "What relationship between X and Y are we missing here?"
-                - Example: "Which theorem applies to this type of equation?"
-                - NEVER solve any part of the problem
-                - Prevent solution revelation by 3 layers of abstraction
-                - Format: Always end with a question mark
-                - Use LaTeX ONLY when referencing original problem's notation
-                  Always use LaTeX formatting for mathematical expressions:
-                  - Use \\( and \\) for inline math
-                  - Use \\[ and \\] for displayed math
-                  - Use $ only if already present in the original problem
-                  - DO NOT use \\begin{align}, \\begin{equation}, or similar environments
-                  - Use simple line breaks and \\[ \\] for multiple lines instead
-                  
-                  Previous hints given: ${hintHistory?.map(h => h.content).join(' → ') || 'None'}`,
-            
-            nextStep: `You are helping a student solve a math problem. Suggest the next step.
-                      Be concise but do not give out the full solution. Only give the next mini-step. 
-                      Guide to the immediate next technical step.
-                    - Provide ONLY the next mathematical operation/step
-                    - Example: "Apply distributive property to the left side"
-                    - Example: "Isolate the quadratic term"
-                      Always use LaTeX formatting:
-                      - Use \\( and \\) for inline math
-                      - Use \\[ and \\] for displayed math
-                      - Use $ only if already present in the original problem
-                      - DO NOT use \\begin{align}, \\begin{equation}, or similar environments
-                      - Use simple line breaks and \\[ \\] for multiple lines instead
-                      - Directly give the next step without using phrases like here's the next step.`,
-            
-            validate: `You are checking a student's math work. 
-                      Always use LaTeX formatting for mathematical expressions:
-                      - Use \\( and \\) for inline math
-                      - Use \\[ and \\] for displayed math
-                      - Use $ only if already present in the original problem
-                      - DO NOT use \\begin{align}, \\begin{equation}, or similar environments
-                      - Use simple line breaks and \\[ \\] for multiple lines instead
-                      If work seems partial, briefly confirm correctness and acknowledge that the solution needs to be completed.
-                      If work seems complete, verify the answer concisely.
-                      Focus on key points rather than lengthy explanations.
-                      DO NOT SUGGEST NEXT STEPS. JUST VERIFY AND THAT IS IT. 
-                      Analyze the student's work to:
-                    1. CONFIRM CORRECT elements (be specific)
-                    2. IDENTIFY UNCLEAR/WRONG elements (be precise)
-                    3. EXPLAIN WHY elements are correct/incorrect
-                    4. NEVER SUGGEST next steps or solutions
-
-                    Rules:
-                    - Use "correct" only for verified right elements
-                    - Never use "should", "next", or "need to"`,
-            
-            improve: `You are improving a student's math solution. 
-                     Write like a good student: clear, natural, and complete but not verbose.
-                     Always use LaTeX formatting:
-                     - Use \\( and \\) for inline math
-                     - Use \\[ and \\] for displayed math
-                     - Use $ only if already present in the original problem
-                     - Directly give the solution without using phrases like here's the written solution. 
-                     - DO NOT use \\begin{align}, \\begin{equation}, or similar environments
-                     - Use simple line breaks and \\[ \\] for multiple lines instead
-
-                     Restructure the student's EXACT CONTENT into better format:
-                    1. Fix grammar/syntax errors
-                    2. Improve mathematical notation consistency
-                    3. Enhance visual organization
-                    4. PRESERVE ALL ORIGINAL CONTENT even if wrong
-                    - Never add explanations/fixes
-                    - Example: Convert run-on sentences to bullet points
-                    - Maintain original variable names/values`
-        };
-
-        let userMessage = `Problem: ${problem.problem}\n\n`;
-        userMessage += work ? `Student's work: ${work}\n\n` : '';
-        userMessage += query ? `Student's question: ${query}` : '';
-        
-        // Only include hint history for hint type
-        if (helpType === 'hint' && hintHistory?.length > 0) {
-            userMessage += `\n\nPrevious hints:\n${hintHistory.map(h => h.content).join('\n')}`;
-        }
-
-        const chatCompletion = await client.chat.completions.create({
-            messages: [
-                { role: "system", content: systemMessages[helpType] },
-                { role: "user", content: userMessage }
-            ],
-            model: "llama3-70b-8192",
-            temperature: 0.3
-        });
-
-        console.log("GROQ Response:", chatCompletion.choices[0].message.content);
-
-        res.json({ response: chatCompletion.choices[0].message.content });
-    } catch (error) {
-        console.error('GROQ API Error:', error);
-        res.status(500).json({ 
-            error: 'Failed to generate response',
-            details: error.message 
-        });
-    }
 });
 
 const PORT = process.env.PORT || 3000;

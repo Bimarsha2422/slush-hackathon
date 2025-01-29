@@ -3,10 +3,14 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
+import { isAuthenticated } from '../middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const router = express.Router();
+
+// Add authentication middleware
+router.use(isAuthenticated);
 
 const ITEMS_PER_PAGE = 10;
 
@@ -30,18 +34,15 @@ async function getTopicProblems(topicName, options = {}) {
                 })
         );
 
-        // Extract numeric level for sorting
         problems = problems.map(p => ({
             ...p,
             numericLevel: parseInt(p.level.replace('Level ', '')) || 0
         }));
 
-        // Filter by level if specified
         if (level !== 'all') {
             problems = problems.filter(p => p.numericLevel === parseInt(level));
         }
 
-        // Sort problems
         problems.sort((a, b) => {
             if (sort === 'level') {
                 return a.numericLevel - b.numericLevel || parseInt(a.id) - parseInt(b.id);
@@ -49,17 +50,13 @@ async function getTopicProblems(topicName, options = {}) {
             return parseInt(a.id) - parseInt(b.id);
         });
 
-        // Get unique levels for the filter dropdown
         const uniqueLevels = [...new Set(problems.map(p => p.numericLevel))].sort((a, b) => a - b);
-
-        // Calculate pagination
         const totalItems = problems.length;
         const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
         const currentPage = Math.max(1, Math.min(page, totalPages));
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         const paginatedProblems = problems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-        // Calculate the starting problem number for the current page
         const startNumber = (currentPage - 1) * ITEMS_PER_PAGE + 1;
         paginatedProblems.forEach((problem, index) => {
             problem.displayNumber = startNumber + index;
@@ -121,7 +118,8 @@ router.get('/:topicName', async (req, res) => {
             pagination,
             filters,
             currentUrl: `/topics/${topicName}`,
-            query: req.query
+            query: req.query,
+            user: req.user // Add user data for the template
         });
     } catch (error) {
         console.error('Error loading topic:', error);

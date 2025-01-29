@@ -4,11 +4,15 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
 import Groq from 'groq-sdk';
+import { isAuthenticated } from '../middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
+
+// Add authentication middleware
+router.use(isAuthenticated);
 
 const client = new Groq({
     apiKey: process.env.GROQ_API_KEY
@@ -31,7 +35,7 @@ router.get('/:topicName/:problemId', async (req, res) => {
     
     try {
         const problem = await getProblem(topicName, problemId);
-        console.log('Problem data:', problem);  // Add this log
+        console.log('Problem data:', problem);
         
         if (!problem) {
             return res.status(404).render('error', {
@@ -41,9 +45,10 @@ router.get('/:topicName/:problemId', async (req, res) => {
         
         res.render('problem', {
             title: `${topicName} - Problem ${problemId}`,
-            problem,  // This should contain the full problem object
+            problem,
             topicName,
-            problemId
+            problemId,
+            user: req.user // Add user data for the template
         });
     } catch (error) {
         console.error('Error loading problem:', error);
