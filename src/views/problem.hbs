@@ -39,12 +39,36 @@
                 
                 <!-- Drawing Mode -->
                 <div id="canvasWorkArea" class="work-area-container hidden">
-                    <div class="canvas-controls">
-                        <button id="saveDrawing" class="tool-btn">Save Drawing</button>
-                        <button id="clearDrawing" class="tool-btn">Clear</button>
+                    <div class="canvas-toolbar">
+                        <button class="tool-btn active" data-tool="pen">
+                            <span>✏️</span> Pen
+                        </button>
+                        <button class="tool-btn" data-tool="eraser">
+                            <span>🧹</span> Eraser
+                        </button>
+                        <div class="color-tools">
+                            <input type="color" id="colorPicker" value="#000000" title="Color">
+                            <div id="commonColors">
+                                <button class="color-btn" data-color="#000000" style="background: #000000;"></button>
+                                <button class="color-btn" data-color="#ff0000" style="background: #ff0000;"></button>
+                                <button class="color-btn" data-color="#0000ff" style="background: #0000ff;"></button>
+                            </div>
+                        </div>
+                        <div class="brush-size">
+                            <input type="range" id="brushSize" min="1" max="50" value="2">
+                            <span id="brushSizeLabel">2px</span>
+                        </div>
+                        <button class="tool-btn" id="undoBtn">
+                            <span>↩️</span> Undo
+                        </button>
+                        <button class="tool-btn" id="redoBtn">
+                            <span>↪️</span> Redo
+                        </button>
+                        <button class="tool-btn" id="clearCanvas">
+                            <span>🗑️</span> Clear
+                        </button>
                     </div>
-                    <!-- Literally Canvas will be mounted here -->
-                    <div id="drawing-area" class="literally-canvas-container"></div>
+                    <canvas id="drawing-canvas"></canvas>
                 </div>
             </div>
 
@@ -177,50 +201,79 @@
 }
 
 /* Canvas Specific Styles */
-.literally-canvas-container {
-    width: 100%;
-    height: 500px;
-    background: white;
-    border-radius: 8px;
-    margin-top: 10px;
-}
-
-.canvas-controls {
-    margin-bottom: 10px;
+.canvas-toolbar {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #2d2d2d;
+    border-radius: 8px;
+    align-items: center;
 }
 
 .tool-btn {
-    padding: 8px 16px;
+    padding: 8px 12px;
     background: #383838;
     border: 1px solid #404040;
     color: #e0e0e0;
     border-radius: 4px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 40px;
+    justify-content: center;
 }
 
-.tool-btn:hover {
+.tool-btn.active {
     background: #4f46e5;
+    border-color: #6366f1;
 }
 
-/* Override Literally Canvas styles for dark theme */
-.literally {
-    border: 1px solid #404040 !important;
+.color-tools {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#commonColors {
+    display: flex;
+    gap: 5px;
+}
+
+.color-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.brush-size {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    background: #383838;
+    border-radius: 4px;
+    min-width: 150px;
+}
+
+#colorPicker {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+}
+
+#drawing-canvas {
+    width: 100%;
+    height: 500px;
     border-radius: 8px;
-}
-
-.literally .lc-picker {
-    background-color: #2d2d2d !important;
-    border-right: 1px solid #404040 !important;
-}
-
-.literally .lc-drawing {
-    background-color: white !important;
-}
-
-.literally .lc-options {
-    background-color: #2d2d2d !important;
+    border: 1px solid #404040;
+    touch-action: none;
 }
 
 /* LaTeX Preview */
@@ -233,7 +286,7 @@
     border: 1px solid #404040;
 }
 
-/* Help Section Styles */
+/* Help Section */
 .help-buttons {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -304,20 +357,19 @@
 </style>
 
 <script>
-// Global variables
 let responseHistory = [];
 let isExpanded = false;
 let currentProblemId = '{{topicName}}/{{problemId}}';
-let canvasInstance = null;
+let canvas;
+let canvasHistory = [];
+let historyPosition = 0;
 
-// Initialize everything when document loads
 document.addEventListener('DOMContentLoaded', function() {
     clearHistory();
     initializeInputModes();
     initializeLatexPreview();
 });
 
-// Clear response history
 function clearHistory() {
     responseHistory = [];
     document.getElementById('previousResponses').innerHTML = '';
@@ -325,7 +377,6 @@ function clearHistory() {
     document.getElementById('toggleBtn').textContent = 'Show Previous Responses (0)';
 }
 
-// Initialize input mode switching
 function initializeInputModes() {
     const modeButtons = document.querySelectorAll('.input-mode-btn');
     const workAreas = {
@@ -335,64 +386,187 @@ function initializeInputModes() {
     };
     
     modeButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             const mode = btn.dataset.mode;
             
-            // Update buttons
             modeButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             
-            // Update visible area
             Object.values(workAreas).forEach(area => area.classList.add('hidden'));
             workAreas[mode].classList.remove('hidden');
             
-            // Initialize canvas if needed
-            if (mode === 'canvas' && !canvasInstance) {
-                initializeCanvas();
+            if (mode === 'canvas' && !canvas) {
+                await initializeCanvas();
             }
         });
     });
-
-    // Canvas control buttons
-    document.getElementById('saveDrawing')?.addEventListener('click', saveDrawing);
-    document.getElementById('clearDrawing')?.addEventListener('click', clearDrawing);
 }
 
-// Initialize canvas
-function initializeCanvas() {
-    const container = document.getElementById('drawing-area');
-    if (!container) return;
+async function initializeCanvas() {
+    const canvasEl = document.getElementById('drawing-canvas');
+    if (!canvasEl || canvas) return;
 
-    canvasInstance = LC.init(container, {
-        imageSize: { width: container.offsetWidth, height: 500 },
-        toolbarPosition: 'top',
-        defaultStrokeWidth: 2,
-        strokeWidths: [1, 2, 3, 5, 10, 15],
-        tools: [
-            LC.tools.Pencil,
-            LC.tools.Eraser,
-            LC.tools.Line,
-            LC.tools.Rectangle,
-            LC.tools.Circle,
-            LC.tools.Pan
-        ]
+    console.log('Initializing canvas...'); // Debug log
+
+    const container = canvasEl.parentElement;
+    canvasEl.width = container.offsetWidth;
+    canvasEl.height = 500;
+
+try {
+        // Wait for fabric to be available
+        if (!window.fabric) {
+            console.log('Waiting for Fabric.js to load...'); // Debug log
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        if (!window.fabric) {
+            throw new Error('Fabric.js failed to load');
+        }
+
+        canvas = new window.fabric.Canvas('drawing-canvas', {
+            isDrawingMode: true,
+            width: container.offsetWidth,
+            height: 500,
+            backgroundColor: 'white'
+        });
+
+        console.log('Canvas initialized successfully'); // Debug log
+
+        // Initialize default brush
+        canvas.freeDrawingBrush = new window.fabric.PencilBrush(canvas);
+        canvas.freeDrawingBrush.width = parseInt(document.getElementById('brushSize').value) || 2;
+        canvas.freeDrawingBrush.color = document.getElementById('colorPicker').value || '#000000';
+
+        // Add event listeners for tools
+        document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tool = e.currentTarget.dataset.tool;
+                setTool(tool);
+                
+                document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+            });
+        });
+
+        // Color picker and common colors
+        document.getElementById('colorPicker').addEventListener('input', (e) => {
+            if (getCurrentTool() === 'pen') {
+                canvas.freeDrawingBrush.color = e.target.value;
+            }
+        });
+
+        document.querySelectorAll('.color-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const color = e.target.dataset.color;
+                if (getCurrentTool() === 'pen') {
+                    canvas.freeDrawingBrush.color = color;
+                    document.getElementById('colorPicker').value = color;
+                }
+            });
+        });
+
+        // Brush size
+        document.getElementById('brushSize').addEventListener('input', (e) => {
+            const size = parseInt(e.target.value);
+            canvas.freeDrawingBrush.width = size;
+            document.getElementById('brushSizeLabel').textContent = `${size}px`;
+        });
+
+        // Canvas events for history
+        canvas.on('object:added', () => {
+            updateCanvasHistory();
+        });
+
+        // Undo/Redo buttons
+        document.getElementById('undoBtn').addEventListener('click', undo);
+        document.getElementById('redoBtn').addEventListener('click', redo);
+
+        // Clear canvas
+        document.getElementById('clearCanvas').addEventListener('click', () => {
+            canvas.clear();
+            canvas.backgroundColor = 'white';
+            canvas.renderAll();
+            updateCanvasHistory();
+        });
+
+        // Save initial state
+        updateCanvasHistory();
+
+    } catch (error) {
+        console.error('Error initializing canvas:', error);
+    }
+}
+
+function getCurrentTool() {
+    const activeToolBtn = document.querySelector('.tool-btn[data-tool].active');
+    return activeToolBtn ? activeToolBtn.dataset.tool : 'pen';
+}
+function setTool(tool) {
+    if (!canvas || !window.fabric) {
+        console.warn('Canvas or Fabric.js not initialized yet');
+        return;
+    }
+    
+    try {
+        if (tool === 'pen') {
+            canvas.isDrawingMode = true;
+            canvas.freeDrawingBrush = new window.fabric.PencilBrush(canvas);
+            canvas.freeDrawingBrush.color = document.getElementById('colorPicker').value;
+        } else if (tool === 'eraser') {
+            canvas.isDrawingMode = true;
+            canvas.freeDrawingBrush = new window.fabric.PencilBrush(canvas);
+            canvas.freeDrawingBrush.color = '#FFFFFF';
+        }
+        
+        canvas.freeDrawingBrush.width = parseInt(document.getElementById('brushSize').value);
+    } catch (error) {
+        console.error('Error setting tool:', error);
+    }
+}
+
+function updateCanvasHistory() {
+    // Remove any states after current position if we're in the middle of history
+    canvasHistory = canvasHistory.slice(0, historyPosition + 1);
+    // Add current state to history
+    canvasHistory.push(JSON.stringify(canvas));
+    // Move position to latest state
+    historyPosition = canvasHistory.length - 1;
+    updateUndoRedoButtons();
+}
+
+function undo() {
+    if (historyPosition > 0) {
+        historyPosition--;
+        loadCanvasState(canvasHistory[historyPosition]);
+        updateUndoRedoButtons();
+    }
+}
+
+function redo() {
+    if (historyPosition < canvasHistory.length - 1) {
+        historyPosition++;
+        loadCanvasState(canvasHistory[historyPosition]);
+        updateUndoRedoButtons();
+    }
+}
+
+function loadCanvasState(state) {
+    canvas.clear();
+    canvas.loadFromJSON(state, () => {
+        canvas.renderAll();
+        canvas.backgroundColor = 'white';
     });
 }
 
-// Save drawing
-function saveDrawing() {
-    if (canvasInstance) {
-        const dataURL = canvasInstance.getImage().toDataURL();
-        // Here you could send this dataURL to your server or handle it as needed
-        console.log('Drawing saved as:', dataURL);
-    }
-}
-
-// Clear drawing
-function clearDrawing() {
-    if (canvasInstance) {
-        canvasInstance.clear();
-    }
+function updateUndoRedoButtons() {
+    const undoBtn = document.getElementById('undoBtn');
+    const redoBtn = document.getElementById('redoBtn');
+    
+    undoBtn.disabled = historyPosition <= 0;
+    redoBtn.disabled = historyPosition >= canvasHistory.length - 1;
+    
+    undoBtn.style.opacity = undoBtn.disabled ? '0.5' : '1';
+    redoBtn.style.opacity = redoBtn.disabled ? '0.5' : '1';
 }
 
 // Initialize LaTeX preview
@@ -439,26 +613,24 @@ async function getAIHelp(helpType) {
             work = document.getElementById('latexInput').value;
             break;
         case 'canvas':
-            if (canvasInstance) {
+            if (canvas) {
+                // For now just indicate canvas work
                 work = '[Drawing submitted]';
-                // You could include the drawing data here if needed:
-                // const dataURL = canvasInstance.getImage().toDataURL();
+                // Later: Add drawing export functionality
+                // work = canvas.toDataURL();
             }
             break;
     }
 
-    // Move current response to history if it exists
     if (currentResponse.innerHTML.trim()) {
         responseHistory.push({
             content: currentResponse.innerHTML,
             type: helpType,
             timestamp: new Date().toLocaleTimeString()
         });
-
         updateResponseHistory();
     }
 
-    // Show loading state
     currentResponse.innerHTML = 'Getting help...';
 
     try {
@@ -511,13 +683,12 @@ function updateResponseHistory() {
 
 // Handle window resize
 window.addEventListener('resize', () => {
-    if (canvasInstance) {
-        // Update canvas size if needed
-        const container = document.getElementById('drawing-area');
-        if (container) {
-            const width = container.offsetWidth;
-            canvasInstance.setImageSize(width, 500);
-        }
+    if (canvas) {
+        const container = document.getElementById('drawing-canvas').parentElement;
+        canvas.setDimensions({
+            width: container.offsetWidth,
+            height: 500
+        });
     }
 });
 </script>

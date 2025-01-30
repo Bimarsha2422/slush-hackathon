@@ -11,13 +11,12 @@
     {{!-- Inter Font --}}
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
 
-    <!-- Replace the old dependencies with these -->
-<script src="
-https://cdn.jsdelivr.net/npm/literallycanvas@0.5.2/lib/js/literallycanvas-core.min.js
-"></script>
-<link href="
-https://cdn.jsdelivr.net/npm/literallycanvas@0.5.2/lib/css/literallycanvas.min.css
-" rel="stylesheet">
+
+<script type="module">
+  import * as fabric from 'https://cdn.jsdelivr.net/npm/fabric@6.5.4/+esm'
+  window.fabric = fabric;
+</script>
+
 <script>
 MathJax = {
     loader: {
