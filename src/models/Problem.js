@@ -1,35 +1,41 @@
+// src/models/Problem.js
 import mongoose from 'mongoose';
 
 const problemSchema = new mongoose.Schema({
-  problemId: { 
-    type: String, 
-    required: true, 
-    unique: true 
-  },
-  topic: { 
-    type: String, 
-    required: true,
-    index: true  // Add index for faster topic-based queries
-  },
-  level: { 
-    type: String, 
-    required: true 
-  },
-  type: String,
-  problem: { 
-    type: String, 
-    required: true 
-  },
-  solution: String,
-  hints: [String],
-  createdAt: { 
-    type: Date, 
-    default: Date.now 
-  }
+    problemId: { 
+        type: String, 
+        required: true, 
+        unique: true 
+    },
+    originalId: {
+        type: String,
+        required: true
+    },
+    topic: { 
+        type: String, 
+        required: true,
+        index: true
+    },
+    level: { 
+        type: Number, 
+        required: true,
+        min: 0,
+        default: 0
+    },
+    type: String,
+    problem: { 
+        type: String, 
+        required: true 
+    },
+    solution: String,
+    createdAt: { 
+        type: Date, 
+        default: Date.now 
+    }
 });
 
-// Add indexes for common queries
-problemSchema.index({ topic: 1, level: 1 });
+// Add compound index for topic and originalId
+problemSchema.index({ topic: 1, originalId: 1 });
 
 const Problem = mongoose.model('Problem', problemSchema);
 
