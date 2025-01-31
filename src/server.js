@@ -7,6 +7,8 @@ import { fileURLToPath } from 'url';
 import topicsRouter from './routes/topics.js';  // Note the .js extension
 import problemsRouter from './routes/problems.js';
 import Groq from 'groq-sdk'; 
+import connectDB from './config/db.js';
+import Problem from './models/Problem.js';
 
 // ES modules require these to get __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -80,6 +82,19 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/topics', topicsRouter);
 app.use('/problems', problemsRouter);
+
+app.get('/api/test', async (req, res) => {
+  try {
+    const count = await Problem.countDocuments();
+    res.json({ 
+      message: 'MongoDB connection successful', 
+      problemCount: count 
+    });
+  } catch (error) {
+    console.error('Test endpoint error:', error);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
 
 app.get('/', (req, res) => {
     res.render('home', {
@@ -207,6 +222,7 @@ app.post('/api/help', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+await connectDB();
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
