@@ -4,11 +4,15 @@ import express from 'express';
 import { engine } from 'express-handlebars';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import topicsRouter from './routes/topics.js';  // Note the .js extension
-import problemsRouter from './routes/problems.js';
 import Groq from 'groq-sdk'; 
 import connectDB from './config/db.js';
 import Problem from './models/Problem.js';
+
+// Import routes
+import topicsRouter from './routes/topics.js';            // UI routes
+import problemsRouter from './routes/problems.js';        // UI routes
+import topicsApiRouter from './routes/api/topics.js';     // API routes
+import problemsApiRouter from './routes/api/problems.js'; // API routes
 
 // ES modules require these to get __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -22,6 +26,14 @@ const client = new Groq({
 
 app.use(express.json()); 
 
+app.use('/topics', topicsRouter);     // For rendering topic pages
+app.use('/problems', problemsRouter);  // For rendering problem pages
+
+// API Routes
+app.use('/api/topics', topicsApiRouter);    // For topic data
+app.use('/api/problems', problemsApiRouter); // For problem data
+
+// In src/server.js, update the Handlebars configuration
 app.engine('hbs', engine({
     extname: '.hbs',
     defaultLayout: 'main',
@@ -43,34 +55,13 @@ app.engine('hbs', engine({
         toString: function(value) {
             return value.toString();
         },
-        merge: function(obj1, obj2) {
-            return { ...obj1, ...obj2 };
-        },
-        buildUrl: function(baseUrl, params) {
-            const searchParams = new URLSearchParams();
-            for (const [key, value] of Object.entries(params)) {
-                if (value !== undefined && value !== null) {
-                    searchParams.append(key, value);
-                }
-            }
-            const queryString = searchParams.toString();
-            return queryString ? `${baseUrl}?${queryString}` : baseUrl;
-        },
-        pageUrl: function(currentUrl, page, currentLevel) {
+        pageUrl: function(baseUrl, page, level) {
             const params = new URLSearchParams();
             params.set('page', page);
-            if (currentLevel && currentLevel !== 'all') {
-                params.set('level', currentLevel);
+            if (level && level !== 'all') {
+                params.set('level', level);
             }
-            return `${currentUrl}?${params.toString()}`;
-        }, 
-        object: function() {
-            const args = Array.from(arguments);
-            const obj = {};
-            for (let i = 0; i < args.length - 1; i += 2) {
-                obj[args[i]] = args[i + 1];
-            }
-            return obj;
+            return `${baseUrl}?${params.toString()}`;
         }
     }
 }));
