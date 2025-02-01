@@ -1,4 +1,6 @@
 .env 
 node_modules
 MATH 
+MATH_v0
 .DS_Store 
+current.txt

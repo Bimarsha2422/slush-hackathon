@@ -1,6 +1,6 @@
 // src/routes/topics.js
 import express from 'express';
-import Problem from '../models/Problem.js';
+import Problem from '../../models/Problem.js';
 
 const router = express.Router();
 
