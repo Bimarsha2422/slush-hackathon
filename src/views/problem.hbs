@@ -93,6 +93,49 @@
           </div>
           <canvas id="drawing-canvas"></canvas>
         </div>
+
+        <div class="flex justify-between items-center mt-4 space-x-4">
+    <button onclick="saveProgress()" 
+            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm 
+                   text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none 
+                   focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+        <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+        </svg>
+        Save Progress
+    </button>
+    
+    {{#if isAssignmentQuestion}}
+    <button onclick="markComplete()" 
+            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm 
+                   text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none 
+                   focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+        <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M5 13l4 4L19 7"/>
+        </svg>
+        Mark as Complete
+    </button>
+    {{/if}}
+</div>
+
+
+<div id="saveStatus" class="mt-2 text-sm hidden">
+    <span class="save-success text-green-600 hidden">
+        <svg class="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        Progress saved successfully
+    </span>
+    <span class="save-error text-red-600 hidden">
+        <svg class="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        Failed to save progress
+    </span>
+</div>
+
       </div>
 
       <!-- Help Section -->
@@ -123,6 +166,22 @@
 
 <style>
   /* Base Styles */
+
+  .feedback-animation {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
   .problem-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -681,4 +740,233 @@ function setTool(tool) {
       });
     }
   });
+
+
+async function saveProgress() {
+    const activeMode = document.querySelector('.input-mode-btn.active').dataset.mode;
+    let work = '';
+    
+    // Get work based on active mode
+    switch (activeMode) {
+        case 'text':
+            work = document.getElementById('mainWorkArea').value;
+            break;
+        case 'latex':
+            work = document.getElementById('latexInput').value;
+            break;
+        case 'canvas':
+            work = canvas.toDataURL('image/png');
+            break;
+    }
+
+    if (!work.trim() && activeMode !== 'canvas') {
+        showSaveStatus('error', 'No work to save');
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `/student/assignment/${assignmentContext.assignmentId}/question/${assignmentContext.questionId}/save`, 
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    work,
+                    mode: activeMode
+                })
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error('Failed to save progress');
+        }
+
+        const data = await response.json();
+        showSaveStatus('success', 'Progress saved successfully');
+    } catch (error) {
+        console.error('Error saving progress:', error);
+        showSaveStatus('error', 'Failed to save progress');
+    }
+}
+
+function showSaveStatus(type, message) {
+    const statusDiv = document.getElementById('saveStatus');
+    const successSpan = statusDiv.querySelector('.save-success');
+    const errorSpan = statusDiv.querySelector('.save-error');
+
+    statusDiv.classList.remove('hidden');
+    
+    if (type === 'success') {
+        successSpan.classList.remove('hidden');
+        errorSpan.classList.add('hidden');
+    } else {
+        successSpan.classList.add('hidden');
+        errorSpan.classList.remove('hidden');
+    }
+
+    // Hide the status after 3 seconds
+    setTimeout(() => {
+        statusDiv.classList.add('hidden');
+    }, 3000);
+}
+
+// Add autosave functionality (optional)
+let autosaveTimeout;
+function setupAutosave() {
+    const workAreas = ['mainWorkArea', 'latexInput'];
+    workAreas.forEach(areaId => {
+        const element = document.getElementById(areaId);
+        if (element) {
+            element.addEventListener('input', () => {
+                clearTimeout(autosaveTimeout);
+                autosaveTimeout = setTimeout(() => {
+                    saveProgress();
+                }, 30000); // Autosave after 30 seconds of inactivity
+            });
+        }
+    });
+}
+
+async function markComplete() {
+    const activeMode = document.querySelector('.input-mode-btn.active').dataset.mode;
+    let work = '';
+    
+    switch (activeMode) {
+        case 'text':
+            work = document.getElementById('mainWorkArea').value;
+            break;
+        case 'latex':
+            work = document.getElementById('latexInput').value;
+            break;
+        case 'canvas':
+            work = canvas.toDataURL('image/png');
+            break;
+    }
+
+    try {
+        const response = await fetch(
+            `/student/assignment/${assignmentContext.assignmentId}/question/${assignmentContext.questionId}/complete`, 
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    work,
+                    mode: activeMode
+                })
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error('Failed to mark as complete');
+        }
+
+        const data = await response.json();
+        
+        // Show AI feedback
+        showAIFeedback(data.feedback);
+        
+        // Update status indicator
+        updateStatusIndicator('completed');
+        
+        // If assignment is complete, show completion message
+        if (data.isAssignmentComplete) {
+            showAssignmentComplete();
+        }
+
+    } catch (error) {
+        console.error('Error marking complete:', error);
+        showError('Failed to mark as complete');
+    }
+}
+
+function showAIFeedback(feedback) {
+    // Create feedback modal or section
+    const feedbackHTML = `
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Feedback on Your Solution</h3>
+            
+            <div class="mb-4">
+                <h4 class="text-sm font-medium text-green-600 mb-2">Strengths</h4>
+                <ul class="list-disc pl-5 space-y-1">
+                    ${feedback.strengths.map(s => `<li class="text-sm text-gray-600">${s}</li>`).join('')}
+                </ul>
+            </div>
+            
+            <div class="mb-4">
+                <h4 class="text-sm font-medium text-orange-600 mb-2">Areas for Improvement</h4>
+                <ul class="list-disc pl-5 space-y-1">
+                    ${feedback.improvements.map(i => `<li class="text-sm text-gray-600">${i}</li>`).join('')}
+                </ul>
+            </div>
+            
+            <div>
+                <h4 class="text-sm font-medium text-gray-900 mb-2">Overall Analysis</h4>
+                <p class="text-sm text-gray-600">${feedback.aiAnalysis}</p>
+            </div>
+        </div>
+    `;
+
+    // Show in a modal or designated area
+    const feedbackArea = document.getElementById('aiFeedback') || createFeedbackArea();
+    feedbackArea.innerHTML = feedbackHTML;
+    feedbackArea.classList.remove('hidden');
+}
+
+function updateStatusIndicator(status) {
+    const statusSpan = document.querySelector('.status-indicator');
+    if (statusSpan) {
+        // Remove all status classes
+        statusSpan.classList.remove('bg-gray-100', 'bg-blue-100', 'bg-green-100');
+        statusSpan.classList.remove('text-gray-800', 'text-blue-800', 'text-green-800');
+        
+        // Add appropriate classes based on status
+        switch (status) {
+            case 'completed':
+                statusSpan.classList.add('bg-green-100', 'text-green-800');
+                statusSpan.textContent = 'Completed';
+                break;
+            case 'in_progress':
+                statusSpan.classList.add('bg-blue-100', 'text-blue-800');
+                statusSpan.textContent = 'In Progress';
+                break;
+            default:
+                statusSpan.classList.add('bg-gray-100', 'text-gray-800');
+                statusSpan.textContent = 'Not Started';
+        }
+    }
+}
+
+function createFeedbackArea() {
+    const feedbackDiv = document.createElement('div');
+    feedbackDiv.id = 'aiFeedback';
+    feedbackDiv.classList.add('mt-8', 'hidden');
+    document.querySelector('.work-section').appendChild(feedbackDiv);
+    return feedbackDiv;
+}
+
+function showAssignmentComplete() {
+    // Show completion message and possibly redirect
+    const message = document.createElement('div');
+    message.className = 'fixed bottom-4 right-4 bg-green-100 text-green-800 p-4 rounded-lg shadow-lg';
+    message.innerHTML = `
+        <div class="flex items-center">
+            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Assignment Complete! Redirecting to assignment overview...
+        </div>
+    `;
+    document.body.appendChild(message);
+    
+    // Redirect after 2 seconds
+    setTimeout(() => {
+        window.location.href = `/student/assignment/${assignmentContext.assignmentId}`;
+    }, 2000);
+}
+
+
 </script>

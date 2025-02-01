@@ -97,6 +97,14 @@ app.engine('hbs', engine({
                 params.set('level', level);
             }
             return `${baseUrl}?${params.toString()}`;
+        }, 
+        formatStatus: function(status) {
+            const statusMap = {
+                'not_started': 'Not Started',
+                'in_progress': 'In Progress',
+                'completed': 'Completed'
+            };
+            return statusMap[status] || status;
         }
     }
 }));

@@ -120,52 +120,6 @@ router.get('/classroom/:id', authPage(['student']), async (req, res) => {
     }
 });
 
-// View/start assignment
-// router.get('/assignment/:id', authPage(['student']), async (req, res) => {
-//     try {
-//         // Get assignment and verify student has access
-//         const assignment = await Assignment.findById(req.params.id)
-//             .populate('classroomId');
-
-//         if (!assignment) {
-//             return res.status(404).render('error', {
-//                 message: 'Assignment not found'
-//             });
-//         }
-
-//         // Get student's progress
-//         const studentAssignment = await StudentAssignment.findOne({
-//             studentId: req.user._id,
-//             assignmentId: assignment._id
-//         });
-
-//         // Format assignment for display
-//         const problemData = {
-//             problem: `<strong>${assignment.title}</strong><br/><br/>${assignment.description}`,
-//             type: 'Assignment',
-//             level: 'Assignment Question',
-//             topic: assignment.classroomId.name
-//         };
-
-//         res.render('problem', {
-//             title: assignment.title,
-//             problem: problemData,
-//             assignmentContext: {
-//                 assignmentId: assignment._id,
-//                 classroomId: assignment.classroomId._id,
-//                 status: studentAssignment?.status || 'not_started',
-//                 totalQuestions: assignment.questions.length
-//             },
-//             isAssignmentQuestion: true
-//         });
-//     } catch (error) {
-//         console.error('Error loading assignment:', error);
-//         res.status(500).render('error', {
-//             message: 'Error loading assignment'
-//         });
-//     }
-// });
-
 router.get('/assignment/:id', authPage(['student']), async (req, res) => {
     try {
         const assignment = await Assignment.findById(req.params.id)
@@ -379,6 +333,130 @@ router.post('/join-classroom', authPage(['student']), async (req, res) => {
 //         });
 //     }
 // });
+router.post('/assignment/:assignmentId/question/:questionId/complete', authPage(['student']), async (req, res) => {
+    try {
+        const { assignmentId, questionId } = req.params;
+        const { work, mode } = req.body;
 
+        // Get student's assignment progress
+        let studentAssignment = await StudentAssignment.findOne({
+            studentId: req.user._id,
+            assignmentId
+        });
+
+        if (!studentAssignment) {
+            return res.status(404).json({ error: 'Assignment progress not found' });
+        }
+
+        // Get the submission history including hints
+        const submission = studentAssignment.submissions.find(s => 
+            s.questionId.toString() === questionId
+        );
+
+        if (!submission) {
+            return res.status(404).json({ error: 'No work found for this question' });
+        }
+
+        // Generate AI analysis
+        const aiAnalysis = await generateAIAnalysis(work, submission.hints);
+
+        // Mark as complete with feedback
+        const feedback = await studentAssignment.markQuestionComplete(questionId, aiAnalysis);
+
+        res.json({ 
+            status: 'success',
+            feedback,
+            isAssignmentComplete: studentAssignment.status === 'completed'
+        });
+    } catch (error) {
+        console.error('Error completing question:', error);
+        res.status(500).json({ error: 'Failed to complete question' });
+    }
+});
+
+router.post('/assignment/:assignmentId/question/:questionId/save', authPage(['student']), async (req, res) => {
+    try {
+        const { assignmentId, questionId } = req.params;
+        const { work, mode } = req.body;
+
+        let studentAssignment = await StudentAssignment.findOne({
+            studentId: req.user._id,
+            assignmentId
+        });
+
+        if (!studentAssignment) {
+            return res.status(404).json({ error: 'Assignment progress not found' });
+        }
+
+        // Save the work
+        await studentAssignment.addSubmission(questionId, work, mode);
+
+        res.json({ 
+            status: 'success',
+            message: 'Progress saved successfully',
+            timestamp: new Date()
+        });
+    } catch (error) {
+        console.error('Error saving progress:', error);
+        res.status(500).json({ 
+            error: 'Failed to save progress',
+            message: error.message
+        });
+    }
+});
+
+function extractPoints(feedback, type) {
+    // Simple extraction - can be made more sophisticated
+    const points = feedback.toLowerCase().includes(type) 
+        ? feedback.split('\n')
+            .filter(line => line.trim().length > 0)
+            .map(line => line.replace(/^[•\-\d.]+\s*/, '').trim())
+            .filter(line => line.length > 0)
+        : [];
+    return points.slice(0, 3); // Return top 3 points
+}
+
+// AI Analysis Helper Function
+async function generateAIAnalysis(work, hints) {
+    try {
+        const analysis = await client.chat.completions.create({
+            messages: [
+                {
+                    role: "system",
+                    content: `Analyze this student's work and provide feedback. Consider:
+                        1. What they did well (strengths)
+                        2. Areas for improvement
+                        3. How they used hints (${hints.length} hints used)
+                        Format your response as specific, actionable points.`
+                },
+                {
+                    role: "user",
+                    content: `Student's work: ${work}\n\nHints used: ${hints.map(h => h.content).join('\n')}`
+                }
+            ],
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.3
+        });
+
+        const feedback = analysis.choices[0].message.content;
+        
+        // Parse the feedback into structured format
+        const strengths = extractPoints(feedback, 'strengths');
+        const improvements = extractPoints(feedback, 'improvements');
+
+        return {
+            strengths,
+            improvements,
+            feedback
+        };
+    } catch (error) {
+        console.error('Error generating AI analysis:', error);
+        return {
+            strengths: [],
+            improvements: [],
+            feedback: 'Unable to generate detailed feedback at this time.'
+        };
+    }
+}
 
 export default router;
