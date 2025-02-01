@@ -10,6 +10,9 @@ const router = express.Router();
 // Create a new classroom (Teachers only)
 router.post('/', auth, requireRole(['teacher']), async (req, res) => {
     try {
+        console.log('Creating classroom with data:', req.body);
+        console.log('Teacher ID:', req.user._id);
+        
         const { name, description } = req.body;
         
         const classroom = new Classroom({
@@ -19,6 +22,8 @@ router.post('/', auth, requireRole(['teacher']), async (req, res) => {
         });
 
         await classroom.save();
+        
+        console.log('Created classroom:', classroom);
         
         res.status(201).json(classroom);
     } catch (error) {

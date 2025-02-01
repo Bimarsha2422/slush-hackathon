@@ -7,15 +7,20 @@ import StudentAssignment from '../models/StudentAssignment.js';
 
 const router = express.Router();
 
-// Teacher dashboard - now using authPage middleware
+// Teacher dashboard
 router.get('/dashboard', authPage(['teacher']), async (req, res) => {
     try {
-        // Get classroom statistics
+        console.log('Loading dashboard for teacher:', req.user._id);
+        
+        // Get all classrooms for this teacher
         const classrooms = await Classroom.find({ 
             teacherId: req.user._id,
-            active: true
+            active: true 
         });
 
+        console.log('Found classrooms:', classrooms);
+
+        // Calculate total students
         let totalStudents = 0;
         classrooms.forEach(classroom => {
             totalStudents += classroom.students.length;
@@ -37,10 +42,11 @@ router.get('/dashboard', authPage(['teacher']), async (req, res) => {
 
         const recentActivity = recentAssignments.map(assignment => ({
             type: 'assignment',
-            message: `New assignment "${assignment.title}" created in ${assignment.classroomId.name}`,
+            message: `New assignment "${assignment.title}" created in ${assignment.classroomId?.name || 'Unknown Class'}`,
             timestamp: assignment.createdAt
         }));
 
+        // Render the dashboard with all data
         res.render('teacher/dashboard', {
             title: 'Teacher Dashboard',
             stats: {
@@ -48,7 +54,10 @@ router.get('/dashboard', authPage(['teacher']), async (req, res) => {
                 studentCount: totalStudents,
                 assignmentCount: assignments.length
             },
-            classrooms,
+            classrooms: classrooms.map(c => ({
+                _id: c._id,
+                name: c.name
+            })),
             recentActivity
         });
     } catch (error) {
