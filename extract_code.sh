@@ -3,12 +3,18 @@
 # Define the output file
 output="current.txt"
 
-# Remove the output file if it already exists (so we start fresh)
+# Remove the output file if it already exists (start fresh)
 rm -f "$output"
 
-# Use 'find' to recursively locate files while excluding:
+# Append the directory structure to the output file using tree,
+# ignoring the .git, node_modules, and MATH directories.
+echo "Directory structure:" >> "$output"
+tree -I '.git|node_modules|MATH' >> "$output"
+echo -e "\n\n" >> "$output"
+
+# Recursively locate files while excluding:
 # - The output file itself
-# - Specified configuration files (.DS_Store, package-lock.json, package.json, postcss.config.js, tailwind.config.js)
+# - Specific configuration files: package-lock.json, package.json, postcss.config.js, tailwind.config.js, .DS_Store
 # - Files within .git, node_modules, and MATH directories
 find . -type f \
   ! -name "$output" \
@@ -20,15 +26,13 @@ find . -type f \
   ! -path "*/node_modules/*" \
   ! -path "*/MATH/*" \
   -print0 | while IFS= read -r -d '' file; do
-    # Append the file name to the output file
+    # Append the file name as a header
     echo "$file" >> "$output"
-    
-    # Append a blank line for readability
     echo "" >> "$output"
     
-    # Append the file's contents to the output file
+    # Append the file's content
     cat "$file" >> "$output"
     
-    # Append another newline as a separator between files
+    # Append a separator newline
     echo -e "\n" >> "$output"
 done

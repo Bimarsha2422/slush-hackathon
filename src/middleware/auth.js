@@ -45,3 +45,39 @@ export const requireRole = (roles) => {
         next();
     };
 };
+
+// New middleware for page routes
+export const authPage = (roles = []) => {
+    return async (req, res, next) => {
+        try {
+            // Check for token in cookie or Authorization header
+            const token = req.cookies?.token || req.header('Authorization')?.replace('Bearer ', '');
+            
+            if (!token) {
+                return res.redirect('/auth');
+            }
+
+            // Verify token
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const user = await User.findOne({ _id: decoded._id, active: true });
+            
+            if (!user) {
+                return res.redirect('/auth');
+            }
+
+            // Check role if specified
+            if (roles.length && !roles.includes(user.role)) {
+                return res.render('error', {
+                    message: 'Access denied - insufficient permissions'
+                });
+            }
+
+            req.user = user;
+            req.token = token;
+            next();
+        } catch (error) {
+            console.error('Auth error:', error);
+            res.redirect('/auth');
+        }
+    };
+};

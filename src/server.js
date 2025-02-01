@@ -1,6 +1,7 @@
 // src/server.js
 import 'dotenv/config';
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import { engine } from 'express-handlebars';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -14,6 +15,10 @@ import problemsRouter from './routes/problems.js';        // UI routes
 import topicsApiRouter from './routes/api/topics.js';     // API routes
 import problemsApiRouter from './routes/api/problems.js'; // API routes
 import authRouter from './routes/auth.js';
+import classroomApiRouter from './routes/api/classroom.js';
+import assignmentsApiRouter from './routes/api/assignments.js';
+import progressApiRouter from './routes/api/progress.js';
+import teacherRouter from './routes/teacher.js';
 
 // ES modules require these to get __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -26,6 +31,7 @@ const client = new Groq({
 });
 
 app.use(express.json()); 
+app.use(cookieParser());
 
 app.use('/api/auth', authRouter);
 app.use('/topics', topicsRouter);     // For rendering topic pages
@@ -34,6 +40,12 @@ app.use('/problems', problemsRouter);  // For rendering problem pages
 // API Routes
 app.use('/api/topics', topicsApiRouter);    // For topic data
 app.use('/api/problems', problemsApiRouter); // For problem data
+
+
+app.use('/api/classrooms', classroomApiRouter);
+app.use('/api/assignments', assignmentsApiRouter);
+app.use('/api/progress', progressApiRouter);
+app.use('/teacher', teacherRouter);
 
 // In src/server.js, update the Handlebars configuration
 app.engine('hbs', engine({

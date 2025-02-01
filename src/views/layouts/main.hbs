@@ -12,46 +12,6 @@
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 
-    <style>
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        .animate-float {
-            animation: float 6s ease-in-out infinite;
-        }
-
-        .typewriter {
-            overflow: hidden;
-            border-right: 2px solid #ff6600; /* updated from dark blue */
-            white-space: nowrap;
-            letter-spacing: .15em;
-            animation: 
-                typing 3.5s steps(40, end),
-                blink-caret .75s step-end infinite;
-        }
-
-        @keyframes typing {
-            from { width: 0 }
-            to { width: 100% }
-        }
-
-        @keyframes blink-caret {
-            from, to { border-color: transparent }
-            50% { border-color: #ff6600; } /* updated from blue */
-        }
-
-        .fade-in {
-            opacity: 0;
-            animation: fadeIn 1s ease-out forwards;
-        }
-
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-    </style>
-
     {{!-- MathJax Configuration --}}
     <script>
         MathJax = {
@@ -82,13 +42,13 @@
 </head>
 
 <body class="h-full bg-white">
-    {{!-- Animated Navigation --}}
+    {{!-- Navigation --}}
     <nav class="bg-orange-50/50 backdrop-blur-md border-b border-orange-200 fixed w-full z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center justify-between w-full">
                     <div class="flex items-center">
-                        {{!-- Animated Logo --}}
+                        {{!-- Logo --}}
                         <a href="/" class="flex items-center text-xl font-bold text-gray-900 hover:text-orange-500 transition-colors group">
                             <svg class="h-6 w-6 mr-2 animate-float" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -109,21 +69,32 @@
 
                     {{!-- Auth Navigation --}}
                     <div class="flex items-center justify-end" id="authNav">
+                        {{!-- User Controls (Hidden by default, shown when logged in) --}}
                         <div class="hidden" id="userControls">
                             <div class="flex items-center gap-4">
+                                {{!-- Dashboard Link --}}
+                                <a href="/teacher/dashboard" id="dashboardLink" 
+                                   class="hidden text-orange-500 hover:text-orange-400 transition-colors">
+                                    Dashboard
+                                </a>
+                                {{!-- User Info --}}
                                 <div class="text-right">
                                     <div class="text-gray-900 text-lg" id="userName"></div>
                                     <div class="text-orange-500 text-sm" id="userRole"></div>
                                 </div>
+                                {{!-- Logout Button --}}
                                 <button onclick="handleLogout()" 
                                     class="p-2 text-gray-600 hover:text-gray-900 transition-colors"
                                     title="Logout">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" 
+                                         stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" 
+                                              d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
                                     </svg>
                                 </button>
                             </div>
                         </div>
+                        {{!-- Guest Controls (Shown by default, hidden when logged in) --}}
                         <div id="guestControls">
                             <a href="/auth" class="text-sm font-medium text-orange-500 hover:text-orange-400 transition-colors">
                                 Login / Register
@@ -135,7 +106,7 @@
         </div>
     </nav>
 
-    {{!-- Main Content with Entrance Animation --}}
+    {{!-- Main Content --}}
     <div class="min-h-screen">
         <div class="pt-24">
             <main class="fade-in mx-auto" style="animation-delay: 0.3s">
@@ -144,7 +115,7 @@
         </div>
     </div>
 
-    {{!-- Animated Footer --}}
+    {{!-- Footer --}}
     <footer class="bg-orange-50/50 backdrop-blur-lg border-t border-orange-200 mt-24">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <p class="text-center text-gray-600 fade-in">
@@ -156,28 +127,7 @@
         </div>
     </footer>
 
-    {{!-- KaTeX Rendering --}}
-    <script>
-        function renderMath() {
-            renderMathInElement(document.body, {
-                delimiters: [
-                    {left: "\\[", right: "\\]", display: true},
-                    {left: "\\(", right: "\\)", display: false},
-                    {left: "$", right: "$", display: false},
-                    {left: "$$", right: "$$", display: true}
-                ],
-                throwOnError: false
-            });
-        }
-        
-        // Initialize animations
-        document.addEventListener('DOMContentLoaded', () => {
-            const animateElements = document.querySelectorAll('.fade-in');
-            animateElements.forEach(el => el.style.opacity = '1');
-        });
-    </script>
-
-    {{!-- Authentication Management --}}
+    {{!-- Authentication Management Script --}}
     <script>
         // Check authentication status on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -188,6 +138,7 @@
             const token = localStorage.getItem('authToken');
             const userControls = document.getElementById('userControls');
             const guestControls = document.getElementById('guestControls');
+            const dashboardLink = document.getElementById('dashboardLink');
 
             if (token) {
                 // User is logged in
@@ -206,6 +157,15 @@
                     const userRole = document.getElementById('userRole');
                     userName.textContent = data.name;
                     userRole.textContent = data.role.charAt(0).toUpperCase() + data.role.slice(1);
+                    
+                    // Show dashboard link based on role
+                    if (data.role === 'teacher') {
+                        dashboardLink.href = '/teacher/dashboard';
+                        dashboardLink.classList.remove('hidden');
+                    } else if (data.role === 'student') {
+                        dashboardLink.href = '/student/dashboard';
+                        dashboardLink.classList.remove('hidden');
+                    }
                 })
                 .catch(() => handleLogout());
             } else {
