@@ -68,6 +68,181 @@ router.get('/dashboard', authPage(['teacher']), async (req, res) => {
     }
 });
 
+// View specific assignment with submissions
+router.get('/assignments/:id', authPage(['teacher']), async (req, res) => {
+    try {
+        // Get assignment details
+        const assignment = await Assignment.findById(req.params.id)
+            .populate('classroomId');
+
+        if (!assignment) {
+            return res.status(404).render('error', {
+                message: 'Assignment not found'
+            });
+        }
+
+        // Verify teacher owns this classroom
+        if (!assignment.classroomId.teacherId.equals(req.user._id)) {
+            return res.status(403).render('error', {
+                message: 'Access denied'
+            });
+        }
+
+        // Get all student submissions for this assignment
+        const studentSubmissions = await StudentAssignment.find({
+            assignmentId: assignment._id
+        }).populate('studentId', 'name email');
+
+        // Format questions with submission stats
+        const questionsWithStats = assignment.questions.map((question, index) => {
+            const submissions = studentSubmissions.map(sa => {
+                const submission = sa.submissions.find(s => 
+                    s.questionId.equals(question._id)
+                );
+                return submission ? {
+                    studentName: sa.studentId.name,
+                    studentId: sa.studentId._id,
+                    status: submission.isComplete ? 'completed' : 
+                            submission.work ? 'in_progress' : 'not_started',
+                    mode: submission.mode,
+                    hintsUsed: submission.hints?.length || 0,
+                    submissionTime: submission.submittedAt,
+                    feedback: submission.feedback
+                } : null;
+            }).filter(Boolean);
+
+            return {
+                ...question.toObject(),
+                questionNumber: index + 1,
+                submissions,
+                stats: {
+                    totalSubmissions: submissions.length,
+                    completed: submissions.filter(s => s.status === 'completed').length,
+                    inProgress: submissions.filter(s => s.status === 'in_progress').length,
+                    averageHints: Math.round(submissions.reduce((acc, s) => acc + s.hintsUsed, 0) / submissions.length || 0)
+                }
+            };
+        });
+
+        // Format data for the template
+        const viewData = {
+            title: `${assignment.title} - Details`,
+            assignment: {
+                ...assignment.toObject(),
+                questions: questionsWithStats
+            },
+            classroom: assignment.classroomId,
+            studentCount: assignment.classroomId.students.length
+        };
+
+        res.render('teacher/assignment-details', viewData);
+    } catch (error) {
+        console.error('Error loading assignment details:', error);
+        res.status(500).render('error', {
+            message: 'Error loading assignment details'
+        });
+    }
+});
+
+
+// View individual student submission
+router.get('/assignments/:assignmentId/submissions/:questionId/:studentId', authPage(['teacher']), async (req, res) => {
+    try {
+        const { assignmentId, questionId, studentId } = req.params;
+
+        // Get assignment and verify teacher ownership
+        const assignment = await Assignment.findById(assignmentId)
+            .populate('classroomId');
+
+        if (!assignment || !assignment.classroomId.teacherId.equals(req.user._id)) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Get student submission
+        const studentAssignment = await StudentAssignment.findOne({
+            assignmentId,
+            studentId
+        }).populate('studentId', 'name');
+
+        if (!studentAssignment) {
+            return res.status(404).json({ error: 'Submission not found' });
+        }
+
+        const submission = studentAssignment.submissions.find(s => 
+            s.questionId.toString() === questionId
+        );
+
+        if (!submission) {
+            return res.status(404).json({ error: 'Submission not found' });
+        }
+
+        res.json({
+            studentName: studentAssignment.studentId.name,
+            work: submission.work,
+            mode: submission.mode,
+            feedback: submission.feedback,
+            submissionTime: submission.submittedAt,
+            hintsUsed: submission.hints?.length || 0
+        });
+
+    } catch (error) {
+        console.error('Error loading submission:', error);
+        res.status(500).json({ error: 'Failed to load submission' });
+    }
+});
+
+// Generate AI report for a question
+router.get('/assignments/:assignmentId/questions/:questionId/report', authPage(['teacher']), async (req, res) => {
+    try {
+        const { assignmentId, questionId } = req.params;
+
+        // Get assignment and verify teacher ownership
+        const assignment = await Assignment.findById(assignmentId)
+            .populate('classroomId');
+
+        if (!assignment || !assignment.classroomId.teacherId.equals(req.user._id)) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Get all submissions for this question
+        const studentAssignments = await StudentAssignment.find({
+            assignmentId,
+            'submissions.questionId': questionId
+        }).populate('studentId', 'name');
+
+        // Format submissions for analysis
+        const submissions = studentAssignments
+            .map(sa => {
+                const submission = sa.submissions.find(s => 
+                    s.questionId.toString() === questionId
+                );
+                return submission ? {
+                    studentId: sa.studentId.name,
+                    work: submission.work,
+                    hints: submission.hints || [],
+                    mode: submission.mode,
+                    feedback: submission.feedback
+                } : null;
+            })
+            .filter(Boolean);
+
+        // Generate report using groqService
+        const report = await groqService.generateClassReport(
+            assignmentId,
+            questionId,
+            submissions
+        );
+
+        res.json({ report });
+
+    } catch (error) {
+        console.error('Error generating report:', error);
+        res.status(500).json({ error: 'Failed to generate report' });
+    }
+});
+
+
+
 // View specific classroom
 router.get('/classroom/:id', authPage(['teacher']), async (req, res) => {
     try {
