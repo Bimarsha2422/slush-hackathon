@@ -490,7 +490,6 @@
       });
 
       document.getElementById('undoBtn').addEventListener('click', undo);
-      document.getElementById('redoBtn')?.addEventListener('click', redo);
 
       document.getElementById('clearCanvas').addEventListener('click', () => {
         canvas.clear();
@@ -543,24 +542,15 @@ function setTool(tool) {
     canvasHistory = canvasHistory.slice(0, historyPosition + 1);
     canvasHistory.push(JSON.stringify(canvas));
     historyPosition = canvasHistory.length - 1;
-    updateUndoRedoButtons();
   }
 
   function undo() {
     if (historyPosition > 0) {
       historyPosition--;
       loadCanvasState(canvasHistory[historyPosition]);
-      updateUndoRedoButtons();
     }
   }
 
-  function redo() {
-    if (historyPosition < canvasHistory.length - 1) {
-      historyPosition++;
-      loadCanvasState(canvasHistory[historyPosition]);
-      updateUndoRedoButtons();
-    }
-  }
 
   function loadCanvasState(state) {
     canvas.clear();
@@ -570,14 +560,6 @@ function setTool(tool) {
     });
   }
 
-  function updateUndoRedoButtons() {
-    const undoBtn = document.getElementById('undoBtn');
-    const redoBtn = document.getElementById('redoBtn');
-    undoBtn.disabled = historyPosition <= 0;
-    redoBtn.disabled = historyPosition >= canvasHistory.length - 1;
-    undoBtn.style.opacity = undoBtn.disabled ? '0.5' : '1';
-    redoBtn.style.opacity = redoBtn.disabled ? '0.5' : '1';
-  }
 
   function initializeLatexPreview() {
     const latexInput = document.getElementById('latexInput');
