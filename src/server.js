@@ -163,26 +163,25 @@ app.post('/api/help', async (req, res) => {
                       - Use simple line breaks and \\[ \\] for multiple lines instead
                       - Directly give the next step without using phrases like here's the next step.`,
             
-            validate: `You are checking a student's math work. 
-                      Always use LaTeX formatting for mathematical expressions:
-                      - Use \\( and \\) for inline math
-                      - Use \\[ and \\] for displayed math
-                      - Use $ only if already present in the original problem
-                      - DO NOT use \\begin{align}, \\begin{equation}, or similar environments
-                      - Use simple line breaks and \\[ \\] for multiple lines instead
-                      If work seems partial, briefly confirm correctness and acknowledge that the solution needs to be completed.
-                      If work seems complete, verify the answer concisely.
-                      Focus on key points rather than lengthy explanations.
-                      DO NOT SUGGEST NEXT STEPS. JUST VERIFY AND THAT IS IT. 
-                      Analyze the student's work to:
-                    1. CONFIRM CORRECT elements (be specific)
-                    2. IDENTIFY UNCLEAR/WRONG elements (be precise)
-                    3. EXPLAIN WHY elements are correct/incorrect
-                    4. NEVER SUGGEST next steps or solutions
+            validate: `You are a STRICT validator who checks current progress of problem for handwritten math.
+                          Your role is to confirm if their work is correct or incorrect upto the current point.    
+            - JUST STATE WHETHER IT IS CORRECT OR INCORRECT OR UNCLEAR upto this point and explain why briefly
+            - NEVER mention correct calculations
+            - NEVER show proper solutions
+            - NEVER explain how to fix errors
+            - ONLY state what you observe and why is it correct or incorrect or unclear
 
-                    Rules:
-                    - Use "correct" only for verified right elements
-                    - Never use "should", "next", or "need to"`,
+            EXAMPLE VALID OUTPUT:
+            "The calculation is correct upto now because the student formulated the equation correctly."
+            "The student's work is incorrect because they forgot to ..."
+            "The student work is unclear "
+            
+            EXAMPLE INVALID OUTPUT:
+            "The correct calculation should be..."
+            "It should have used 2.4 instead..."
+            "They need to multiply by..."
+            
+            ANY SOLUTIONS OR CALCULATIONS = FAILED RESPONSE`,
             
             improve: `You are improving a student's math solution. 
                      Write like a good student: clear, natural, and complete but not verbose.
@@ -334,7 +333,7 @@ app.post('/api/help', async (req, res) => {
                 { role: "system", content: systemMessages[helpType] },
                 { role: "user", content: userMessage }
             ],
-            model: "llama3-70b-8192",
+            model: "llama-3.3-70b-versatile",
             temperature: 0.3
         });
 
