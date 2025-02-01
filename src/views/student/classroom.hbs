@@ -1,0 +1,60 @@
+{{!-- src/views/student/classroom.hbs --}}
+<div class="min-h-screen bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {{!-- Header --}}
+        <div class="border-b border-gray-200 pb-8 mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{classroom.name}}</h1>
+                    <p class="mt-2 text-sm text-gray-600">Teacher: {{classroom.teacherId.name}}</p>
+                </div>
+                <a href="/student/dashboard" class="text-orange-500 hover:text-orange-600">← Back to Dashboard</a>
+            </div>
+        </div>
+
+        {{!-- Assignments --}}
+        <div>
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Assignments</h2>
+            
+            {{#if assignments.length}}
+                <div class="grid gap-6 grid-cols-1 sm:grid-cols-2">
+                    {{#each assignments}}
+                    <a href="/student/assignment/{{_id}}" class="block bg-white shadow overflow-hidden 
+                                                              sm:rounded-lg border border-gray-200 
+                                                              hover:shadow-md hover:border-orange-200 
+                                                              transition-all duration-200">
+                        <div class="px-4 py-5 sm:p-6">
+                            <h3 class="text-lg font-medium text-gray-900">{{title}}</h3>
+                            <p class="mt-1 text-sm text-gray-500">{{description}}</p>
+                            
+                            <div class="mt-4 flex justify-between items-center">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {{#if (eq status 'completed')}}
+                                        bg-green-100 text-green-800
+                                    {{else if (eq status 'in_progress')}}
+                                        bg-blue-100 text-blue-800
+                                    {{else}}
+                                        bg-gray-100 text-gray-800
+                                    {{/if}}">
+                                    {{#if (eq status 'completed')}}
+                                        Completed
+                                    {{else if (eq status 'in_progress')}}
+                                        In Progress
+                                    {{else}}
+                                        Not Started
+                                    {{/if}}
+                                </span>
+                                <span class="text-orange-500">Start Assignment →</span>
+                            </div>
+                        </div>
+                    </a>
+                    {{/each}}
+                </div>
+            {{else}}
+                <div class="text-center py-12 bg-gray-50 rounded-lg">
+                    <p class="text-gray-500">No assignments available yet.</p>
+                </div>
+            {{/if}}
+        </div>
+    </div>
+</div>

@@ -9,9 +9,19 @@ const router = express.Router();
 
 // Rest of the code remains the same...
 // Create a new assignment (Teacher only)
+// In src/routes/api/assignments.js
+
 router.post('/', auth, requireRole(['teacher']), async (req, res) => {
     try {
         const { classroomId, title, description, dueDate, questions } = req.body;
+        
+        console.log('Creating assignment with data:', {
+            classroomId,
+            title,
+            description,
+            dueDate,
+            questionCount: questions?.length || 0
+        });
         
         // Verify teacher owns this classroom
         const classroom = await Classroom.findOne({
@@ -22,13 +32,26 @@ router.post('/', auth, requireRole(['teacher']), async (req, res) => {
         if (!classroom) {
             return res.status(404).json({ error: 'Classroom not found' });
         }
+
+        // Make sure we have at least one question
+        if (!questions || !Array.isArray(questions) || questions.length === 0) {
+            return res.status(400).json({ error: 'Assignment must have at least one question' });
+        }
+
+        // Prepare questions with proper structure
+        const formattedQuestions = questions.map(q => ({
+            question: q.question,
+            solution: q.solution || '',
+            type: q.type || 'math'
+        }));
         
         const assignment = new Assignment({
             classroomId,
             title,
             description,
-            dueDate,
-            questions: questions || []
+            dueDate: dueDate || null,
+            questions: formattedQuestions,
+            active: true
         });
         
         await assignment.save();
@@ -37,10 +60,17 @@ router.post('/', auth, requireRole(['teacher']), async (req, res) => {
         const studentAssignments = classroom.students.map(studentId => ({
             studentId,
             assignmentId: assignment._id,
-            classroomId
+            classroomId,
+            status: 'not_started',
+            submissions: []
         }));
         
         await StudentAssignment.insertMany(studentAssignments);
+        
+        console.log('Created assignment:', {
+            id: assignment._id,
+            questionCount: assignment.questions.length
+        });
         
         res.status(201).json(assignment);
     } catch (error) {

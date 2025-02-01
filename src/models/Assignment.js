@@ -4,13 +4,17 @@ import mongoose from 'mongoose';
 const questionSchema = new mongoose.Schema({
     question: {
         type: String,
-        required: true
+        required: [true, 'Question text is required']
     },
     solution: String,
     type: {
         type: String,
         enum: ['math', 'multiple-choice'],
         default: 'math'
+    },
+    isComplete: {
+        type: Boolean,
+        default: false
     }
 });
 
