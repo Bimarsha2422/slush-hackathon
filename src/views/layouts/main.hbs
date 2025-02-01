@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark h-full">
+<html lang="en" class="h-full">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,7 +24,7 @@
 
         .typewriter {
             overflow: hidden;
-            border-right: 2px solid #4f46e5;
+            border-right: 2px solid #ff6600; /* updated from dark blue */
             white-space: nowrap;
             letter-spacing: .15em;
             animation: 
@@ -39,7 +39,7 @@
 
         @keyframes blink-caret {
             from, to { border-color: transparent }
-            50% { border-color: #4f46e5; }
+            50% { border-color: #ff6600; } /* updated from blue */
         }
 
         .fade-in {
@@ -81,27 +81,27 @@
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 
-<body class="h-full bg-gray-900">
+<body class="h-full bg-white">
     {{!-- Animated Navigation --}}
-    <nav class="bg-gray-800/50 backdrop-blur-md border-b border-gray-700 fixed w-full z-50">
+    <nav class="bg-orange-50/50 backdrop-blur-md border-b border-orange-200 fixed w-full z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center justify-between w-full">
                     <div class="flex items-center">
                         {{!-- Animated Logo --}}
-                        <a href="/" class="flex items-center text-xl font-bold text-white hover:text-indigo-400 transition-colors group">
+                        <a href="/" class="flex items-center text-xl font-bold text-gray-900 hover:text-orange-500 transition-colors group">
                             <svg class="h-6 w-6 mr-2 animate-float" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                                       d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                             </svg>
-                            <span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                            <span class="bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent">
                                 Math Learning
                             </span>
                         </a>
 
                         {{!-- Conditional Return Home --}}
                         {{#unless isHome}}
-                        <a href="/" class="ml-8 text-sm font-medium text-gray-300 hover:text-white transition-colors fade-in">
+                        <a href="/" class="ml-8 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors fade-in">
                             ← Return Home
                         </a>
                         {{/unless}}
@@ -112,11 +112,11 @@
                         <div class="hidden" id="userControls">
                             <div class="flex items-center gap-4">
                                 <div class="text-right">
-                                    <div class="text-white text-lg" id="userName"></div>
-                                    <div class="text-indigo-400 text-sm" id="userRole"></div>
+                                    <div class="text-gray-900 text-lg" id="userName"></div>
+                                    <div class="text-orange-500 text-sm" id="userRole"></div>
                                 </div>
                                 <button onclick="handleLogout()" 
-                                    class="p-2 text-gray-300 hover:text-white transition-colors"
+                                    class="p-2 text-gray-600 hover:text-gray-900 transition-colors"
                                     title="Logout">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
@@ -125,7 +125,7 @@
                             </div>
                         </div>
                         <div id="guestControls">
-                            <a href="/auth" class="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
+                            <a href="/auth" class="text-sm font-medium text-orange-500 hover:text-orange-400 transition-colors">
                                 Login / Register
                             </a>
                         </div>
@@ -145,11 +145,11 @@
     </div>
 
     {{!-- Animated Footer --}}
-    <footer class="bg-gray-800/50 backdrop-blur-lg border-t border-gray-700 mt-24">
+    <footer class="bg-orange-50/50 backdrop-blur-lg border-t border-orange-200 mt-24">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <p class="text-center text-gray-400 fade-in">
+            <p class="text-center text-gray-600 fade-in">
                 © 2024 Math Learning Platform • 
-                <span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                <span class="bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent">
                     Empowering Mathematical Minds
                 </span>
             </p>

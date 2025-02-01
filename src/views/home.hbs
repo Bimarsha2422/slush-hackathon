@@ -19,10 +19,10 @@
         <div class="mx-auto max-w-7xl px-6 lg:px-8">
             <div class="mx-auto max-w-2xl text-center">
                 <div class="inline-block">
-                    <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl gradient-text">
+                    <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl gradient-text">
                         Master Mathematics
                     </h1>
-                    <p class="mt-2 text-lg leading-8 text-gray-300 fade-in">
+                    <p class="mt-2 text-lg leading-8 text-gray-600 fade-in">
                         Practice problems across various topics with instant AI feedback.
                     </p>
                 </div>
@@ -33,48 +33,47 @@
     {{!-- Topics Grid with Math Symbol Decorations --}}
     <div class="mx-auto max-w-7xl px-6 lg:px-8 mt-4">
         <div class="mx-auto max-w-2xl lg:max-w-4xl">
-            
             <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {{!-- Algebra --}}
                 <a href="/topics/algebra" class="topic-card group">
                     <div class="topic-symbol">∑</div>
-                    <h3 class="text-base font-semibold leading-7 text-white">Algebra</h3>
-                    <p class="mt-2 text-sm leading-6 text-gray-300">Master equations, functions, and algebraic reasoning.</p>
+                    <h3 class="text-base font-semibold leading-7 text-gray-900">Algebra</h3>
+                    <p class="mt-2 text-sm leading-6 text-gray-600">Master equations, functions, and algebraic reasoning.</p>
                 </a>
 
                 {{!-- Counting & Probability --}}
                 <a href="/topics/counting_and_probability" class="topic-card group">
                     <div class="topic-symbol">P(A)</div>
-                    <h3 class="text-base font-semibold leading-7 text-white">Counting & Probability</h3>
-                    <p class="mt-2 text-sm leading-6 text-gray-300">Learn combinatorics and probability concepts.</p>
+                    <h3 class="text-base font-semibold leading-7 text-gray-900">Counting & Probability</h3>
+                    <p class="mt-2 text-sm leading-6 text-gray-600">Learn combinatorics and probability concepts.</p>
                 </a>
 
                 {{!-- Geometry --}}
                 <a href="/topics/precalculus" class="topic-card group">
                     <div class="topic-symbol">∫</div>
-                    <h3 class="text-base font-semibold leading-7 text-white">Precalculus</h3>
-                    <p class="mt-2 text-sm leading-6 text-gray-300">Prepare for calculus with essential mathematical concepts.</p>
+                    <h3 class="text-base font-semibold leading-7 text-gray-900">Precalculus</h3>
+                    <p class="mt-2 text-sm leading-6 text-gray-600">Prepare for calculus with essential mathematical concepts.</p>
                 </a>
 
                 {{!-- Intermediate Algebra --}}
                 <a href="/topics/intermediate_algebra" class="topic-card group">
                     <div class="topic-symbol">f(x)</div>
-                    <h3 class="text-base font-semibold leading-7 text-white">Intermediate Algebra</h3>
-                    <p class="mt-2 text-sm leading-6 text-gray-300">Advance your algebraic problem-solving skills.</p>
+                    <h3 class="text-base font-semibold leading-7 text-gray-900">Intermediate Algebra</h3>
+                    <p class="mt-2 text-sm leading-6 text-gray-600">Advance your algebraic problem-solving skills.</p>
                 </a>
 
                 {{!-- Number Theory --}}
                 <a href="/topics/number_theory" class="topic-card group">
                     <div class="topic-symbol">ℕ</div>
-                    <h3 class="text-base font-semibold leading-7 text-white">Number Theory</h3>
-                    <p class="mt-2 text-sm leading-6 text-gray-300">Study the properties and relationships of numbers.</p>
+                    <h3 class="text-base font-semibold leading-7 text-gray-900">Number Theory</h3>
+                    <p class="mt-2 text-sm leading-6 text-gray-600">Study the properties and relationships of numbers.</p>
                 </a>
 
                 {{!-- Pre-Algebra --}}
                 <a href="/topics/prealgebra" class="topic-card group">
                     <div class="topic-symbol">±</div>
-                    <h3 class="text-base font-semibold leading-7 text-white">Pre-Algebra</h3>
-                    <p class="mt-2 text-sm leading-6 text-gray-300">Build a strong foundation in basic mathematics.</p>
+                    <h3 class="text-base font-semibold leading-7 text-gray-900">Pre-Algebra</h3>
+                    <p class="mt-2 text-sm leading-6 text-gray-600">Build a strong foundation in basic mathematics.</p>
                 </a>
             </div>
         </div>
@@ -92,7 +91,7 @@
 .symbol {
     position: absolute;
     font-size: 4rem;
-    color: rgba(79, 70, 229, 0.1);
+    color: rgba(255, 165, 0, 0.1); /* updated from blue to a light orange */
     animation: float 6s ease-in-out infinite;
     animation-delay: var(--delay);
     left: var(--x);
@@ -117,7 +116,7 @@
 
 /* Enhanced Title Animation */
 .gradient-text {
-    background: linear-gradient(45deg, #4f46e5, #818cf8, #4f46e5);
+    background: linear-gradient(45deg, #ff6600, #ffaa00, #ff6600); /* updated gradient */
     background-size: 200% auto;
     color: transparent;
     background-clip: text;
@@ -137,8 +136,8 @@
     display: flex;
     flex-direction: column;
     padding: 1.25rem;
-    background: rgba(31, 41, 55, 0.4);
-    border: 1px solid rgba(79, 70, 229, 0.2);
+    background: rgba(255, 237, 213, 0.4); /* updated background */
+    border: 1px solid rgba(255, 128, 0, 0.2); /* updated border */
     border-radius: 1rem;
     overflow: hidden;
     transition: all 0.3s ease;
@@ -147,13 +146,13 @@
 
 .topic-card:hover {
     transform: translateY(-5px);
-    border-color: rgba(79, 70, 229, 0.5);
-    box-shadow: 0 4px 20px rgba(79, 70, 229, 0.2);
+    border-color: rgba(255, 128, 0, 0.5); /* updated hover border */
+    box-shadow: 0 4px 20px rgba(255, 128, 0, 0.2); /* updated hover shadow */
 }
 
 .topic-symbol {
     font-size: 2rem;
-    color: rgba(79, 70, 229, 0.6);
+    color: rgba(255, 128, 0, 0.6); /* updated color */
     margin-bottom: 1rem;
     transition: transform 0.3s ease;
 }

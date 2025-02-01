@@ -1,231 +1,240 @@
-{{!-- problem.hbs --}}
 <div class="problem-container">
-    <div class="problem-header">
-        <h2>{{problem.type}} - Level {{problem.level}}</h2>
-        <a href="/topics/{{topicName}}" class="back-link">← Back to {{topicName}}</a>
+  <div class="problem-header">
+    <h2>{{problem.type}} - Level {{problem.level}}</h2>
+    <a href="/topics/{{topicName}}" class="back-link">← Back to {{topicName}}</a>
+  </div>
+
+  <div class="problem-content">
+    <!-- Problem Statement -->
+    <div class="problem-statement latex-content">
+      <div class="statement-header">Problem:</div>
+      {{{problem.problem}}}
     </div>
 
-    <div class="problem-content">
-        <!-- Problem Statement -->
-        <div class="problem-statement latex-content">
-            <div class="statement-header">Problem:</div>
-            {{{problem.problem}}}
+    <div class="workspace">
+      <!-- Input Type Selector -->
+      <div class="input-type-selector">
+        <button class="input-mode-btn active" data-mode="text">Plain Text</button>
+        <button class="input-mode-btn" data-mode="latex">LaTeX</button>
+        <button class="input-mode-btn" data-mode="canvas">Drawing</button>
+      </div>
+
+      <!-- Input Areas -->
+      <div class="work-section">
+        <div class="section-header">Your Solution:</div>
+        
+        <!-- Text Mode -->
+        <div id="textWorkArea" class="work-area-container">
+          <textarea id="mainWorkArea" class="main-work-area" 
+                    placeholder="Write your solution steps here..."></textarea>
+        </div>
+        
+        <!-- LaTeX Mode -->
+        <div id="latexWorkArea" class="work-area-container hidden">
+          <textarea id="latexInput" class="main-work-area" 
+                    placeholder="Write your LaTeX solution here..."></textarea>
+          <div id="latexPreview" class="latex-preview"></div>
+        </div>
+        
+        <!-- Drawing Mode -->
+        <div id="canvasWorkArea" class="work-area-container hidden">
+          <div class="canvas-toolbar">
+            <button class="tool-btn active" data-tool="pen" data-tooltip="Pen">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" 
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+              </svg>
+            </button>
+            <button class="tool-btn" data-tool="eraser" data-tooltip="Eraser">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" 
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/>
+                <path d="M22 21H7"/>
+              </svg>
+            </button>
+            <div class="color-tools">
+              <input type="color" id="colorPicker" value="#000000" title="Color">
+              <div id="commonColors">
+                <button class="color-btn" data-color="#000000" style="background: #000000;" data-tooltip="Black"></button>
+                <button class="color-btn" data-color="#ff0000" style="background: #ff0000;" data-tooltip="Red"></button>
+                <button class="color-btn" data-color="#0000ff" style="background: #0000ff;" data-tooltip="Blue"></button>
+              </div>
+            </div>
+            <div class="brush-size">
+              <input type="range" id="brushSize" min="1" max="50" value="2" title="Brush Size">
+              <span id="brushSizeLabel">2px</span>
+            </div>
+            <button class="tool-btn" id="undoBtn" data-tooltip="Undo">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" 
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 7v6h6"/>
+                <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+              </svg>
+            </button>
+            <button class="tool-btn" id="clearCanvas" data-tooltip="Clear All">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" 
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"/>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+              </svg>
+            </button>
+          </div>
+          <canvas id="drawing-canvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Help Section -->
+      <div class="help-section">
+        <div class="section-header">Need Help?</div>
+        <textarea id="helpQuery" class="help-query" 
+                  placeholder="Ask a specific question or describe where you're stuck..."></textarea>
+        
+        <div class="help-buttons">
+          <button onclick="getAIHelp('hint')" class="help-btn">💡 Get Hint</button>
+          <button onclick="getAIHelp('nextStep')" class="help-btn">➡️ Next Step</button>
+          <button onclick="getAIHelp('validate')" class="help-btn">✅ Check Work</button>
+          <button onclick="getAIHelp('improve')" class="help-btn">📝 Improve</button>
         </div>
 
-        <div class="workspace">
-            <!-- Input Type Selector -->
-            <div class="input-type-selector">
-                <button class="input-mode-btn active" data-mode="text">Plain Text</button>
-                <button class="input-mode-btn" data-mode="latex">LaTeX</button>
-                <button class="input-mode-btn" data-mode="canvas">Drawing</button>
-            </div>
-
-            <!-- Input Areas -->
-            <div class="work-section">
-                <div class="section-header">Your Solution:</div>
-                
-                <!-- Text Mode -->
-                <div id="textWorkArea" class="work-area-container">
-                    <textarea id="mainWorkArea" class="main-work-area" 
-                        placeholder="Write your solution steps here..."></textarea>
-                </div>
-                
-                <!-- LaTeX Mode -->
-                <div id="latexWorkArea" class="work-area-container hidden">
-                    <textarea id="latexInput" class="main-work-area" 
-                        placeholder="Write your LaTeX solution here..."></textarea>
-                    <div id="latexPreview" class="latex-preview"></div>
-                </div>
-                
-                <!-- Drawing Mode -->
-                <div id="canvasWorkArea" class="work-area-container hidden">
-                    <div class="canvas-toolbar">
-                        <button class="tool-btn active" data-tool="pen" data-tooltip="Pen">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                            </svg>
-                        </button>
-                        <button class="tool-btn" data-tool="eraser" data-tooltip="Eraser">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/>
-                                <path d="M22 21H7"/>
-                            </svg>
-                        </button>
-                        <div class="color-tools">
-                            <input type="color" id="colorPicker" value="#000000" title="Color">
-                            <div id="commonColors">
-                                <button class="color-btn" data-color="#000000" style="background: #000000;" data-tooltip="Black"></button>
-                                <button class="color-btn" data-color="#ff0000" style="background: #ff0000;" data-tooltip="Red"></button>
-                                <button class="color-btn" data-color="#0000ff" style="background: #0000ff;" data-tooltip="Blue"></button>
-                            </div>
-                        </div>
-                        <div class="brush-size">
-                            <input type="range" id="brushSize" min="1" max="50" value="2" title="Brush Size">
-                            <span id="brushSizeLabel">2px</span>
-                        </div>
-                        <button class="tool-btn" id="undoBtn" data-tooltip="Undo">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 7v6h6"/>
-                                <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
-                            </svg>
-                        </button>
-                        <button class="tool-btn" id="clearCanvas" data-tooltip="Clear All">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 6h18"/>
-                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <canvas id="drawing-canvas"></canvas>
-                </div>
-            </div>
-
-            <!-- Help Section -->
-            <div class="help-section">
-                <div class="section-header">Need Help?</div>
-                <textarea id="helpQuery" class="help-query" 
-                    placeholder="Ask a specific question or describe where you're stuck..."></textarea>
-                
-                <div class="help-buttons">
-                    <button onclick="getAIHelp('hint')" class="help-btn">💡 Get Hint</button>
-                    <button onclick="getAIHelp('nextStep')" class="help-btn">➡️ Next Step</button>
-                    <button onclick="getAIHelp('validate')" class="help-btn">✅ Check Work</button>
-                    <button onclick="getAIHelp('improve')" class="help-btn">📝 Improve</button>
-                </div>
-
-                <div class="response-history">
-                    <button onclick="togglePreviousResponses()" class="toggle-btn" id="toggleBtn">
-                        Show Previous Responses (0)
-                    </button>
-                    <div id="previousResponses" class="previous-responses"></div>
-                </div>
-
-                <div id="currentResponse" class="current-response"></div>
-            </div>
+        <div class="response-history">
+          <button onclick="togglePreviousResponses()" class="toggle-btn" id="toggleBtn">
+            Show Previous Responses (0)
+          </button>
+          <div id="previousResponses" class="previous-responses"></div>
         </div>
+
+        <div id="currentResponse" class="current-response"></div>
+      </div>
     </div>
+  </div>
 </div>
 
 <style>
-/* Base Styles */
-.problem-container {
+  /* Base Styles */
+  .problem-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
-    background: #1a1a1a;
-    color: #e0e0e0;
-}
+    background: #ffffff;
+    color: #333333;
+  }
 
-.problem-header h2 {
+  .problem-header h2 {
     margin-bottom: 0.5rem;
-}
+  }
 
-.back-link {
-    color: #4f46e5;
+  .back-link {
+    color: #ff6600;
     text-decoration: none;
-}
+  }
 
-/* Problem Statement */
-.problem-statement {
-    background: #2d2d2d;
+  /* Problem Statement */
+  .problem-statement {
+    background: #f9fafb;
     padding: 20px;
     border-radius: 8px;
     margin: 20px 0;
-    border: 1px solid #404040;
-}
+    border: 1px solid #e5e7eb;
+  }
 
-.statement-header {
+  .statement-header {
     font-weight: bold;
     margin-bottom: 10px;
-    color: #6366f1;
-}
+    color: #ff6600;
+  }
 
-/* Workspace */
-.workspace {
+  /* Workspace */
+  .workspace {
     display: flex;
     flex-direction: column;
     gap: 20px;
-}
+  }
 
-.section-header {
+  .section-header {
     font-weight: bold;
     margin-bottom: 10px;
-    color: #6366f1;
-}
+    color: #ff6600;
+  }
 
-/* Input Type Selector */
-.input-type-selector {
+  /* Input Type Selector */
+  .input-type-selector {
     display: flex;
     gap: 0.5rem;
     margin-bottom: 1rem;
-}
+  }
 
-.input-mode-btn {
+  .input-mode-btn {
     padding: 0.5rem 1rem;
-    background: #2d2d2d;
-    border: 1px solid #404040;
-    color: #e0e0e0;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    color: #333333;
     border-radius: 0.25rem;
     cursor: pointer;
     transition: background 0.2s;
-}
+  }
 
-.input-mode-btn:hover {
-    background: #383838;
-}
+  .input-mode-btn:hover {
+    background: #e5e7eb;
+  }
 
-.input-mode-btn.active {
-    background: #4f46e5;
-    border-color: #6366f1;
-}
+  .input-mode-btn.active {
+    background: #ff6600;
+    border-color: #ff6600;
+    color: white;
+  }
 
-/* Work Areas */
-.work-section, .help-section {
-    background: #2d2d2d;
+  /* Work Areas */
+  .work-section, .help-section {
+    background: #f9fafb;
     padding: 20px;
     border-radius: 8px;
-    border: 1px solid #404040;
-}
+    border: 1px solid #e5e7eb;
+    color: #333333;
+  }
 
-.work-area-container {
+  .work-area-container {
     width: 100%;
-}
+  }
 
-.work-area-container.hidden {
+  .work-area-container.hidden {
     display: none;
-}
+  }
 
-.main-work-area, .help-query {
+  .main-work-area, .help-query {
     width: 100%;
     min-height: 120px;
     padding: 15px;
-    border: 1px solid #404040;
+    border: 1px solid #e5e7eb;
     border-radius: 8px;
-    background: #383838;
-    color: #e0e0e0;
+    background: #ffffff;
+    color: #333333;
     font-family: monospace;
     resize: vertical;
     margin-bottom: 15px;
-}
+  }
 
-/* Canvas Specific Styles */
-.canvas-toolbar {
+  /* Canvas Specific Styles */
+  .canvas-toolbar {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     margin-bottom: 10px;
     padding: 10px;
-    background: #2d2d2d;
+    background: #f9fafb;
     border-radius: 8px;
     align-items: center;
-}
+  }
 
-.tool-btn {
+  .tool-btn {
     padding: 8px 12px;
-    background: #383838;
-    border: 1px solid #404040;
-    color: #e0e0e0;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    color: #333333;
     border-radius: 4px;
     cursor: pointer;
     display: flex;
@@ -233,283 +242,274 @@
     gap: 5px;
     min-width: 40px;
     justify-content: center;
-}
+  }
 
-.tool-btn.active {
-    background: #4f46e5;
-    border-color: #6366f1;
-}
+  .tool-btn.active {
+    background: #ff6600;
+    border-color: #ff6600;
+    color: white;
+  }
 
-.color-tools {
+  .color-tools {
     display: flex;
     align-items: center;
     gap: 5px;
-}
+  }
 
-#commonColors {
+  #commonColors {
     display: flex;
     gap: 5px;
-}
+  }
 
-.color-btn {
+  .color-btn {
     width: 24px;
     height: 24px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-}
+  }
 
-.brush-size {
+  .brush-size {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 5px 10px;
-    background: #383838;
+    background: #f3f4f6;
     border-radius: 4px;
     min-width: 150px;
-}
+  }
 
-#colorPicker {
+  #colorPicker {
     width: 40px;
     height: 40px;
     padding: 0;
     border: none;
     border-radius: 4px;
-}
+  }
 
-#drawing-canvas {
+  #drawing-canvas {
     width: 100%;
     height: 500px;
     border-radius: 8px;
-    border: 1px solid #404040;
+    border: 1px solid #e5e7eb;
     touch-action: none;
-}
+  }
 
-/* LaTeX Preview */
-.latex-preview {
+  /* LaTeX Preview */
+  .latex-preview {
     margin-top: 1rem;
     padding: 1rem;
-    background: #2d2d2d;
+    background: #f9fafb;
     border-radius: 0.25rem;
     min-height: 100px;
-    border: 1px solid #404040;
-}
+    border: 1px solid #e5e7eb;
+  }
 
-/* Help Section */
-.help-buttons {
+  /* Help Section */
+  .help-buttons {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 10px;
     margin-bottom: 20px;
-}
+  }
 
-.help-btn {
+  .help-btn {
     padding: 12px;
     border: none;
     border-radius: 8px;
-    background: #4f46e5;
+    background: #ff6600;
     color: white;
     cursor: pointer;
     transition: background 0.3s;
     font-size: 14px;
-}
+  }
 
-.help-btn:hover {
-    background: #6366f1;
-}
+  .help-btn:hover {
+    background: #ff7f00;
+  }
 
-/* Response History */
-.toggle-btn {
+  /* Response History */
+  .toggle-btn {
     width: 100%;
     padding: 8px 16px;
-    background: #383838;
-    border: 1px solid #4f46e5;
-    color: #e0e0e0;
+    background: #f3f4f6;
+    border: 1px solid #ff6600;
+    color: #333333;
     border-radius: 4px;
     cursor: pointer;
     text-align: left;
     margin-bottom: 10px;
-}
+  }
 
-.previous-responses {
+  .previous-responses {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease-out;
-}
+  }
 
-.previous-responses.expanded {
+  .previous-responses.expanded {
     max-height: 500px;
     overflow-y: auto;
-}
+  }
 
-.response-entry {
+  .response-entry {
     padding: 15px;
     margin: 10px 0;
-    background: #383838;
-    border-left: 4px solid #4f46e5;
+    background: #f3f4f6;
+    border-left: 4px solid #ff6600;
     border-radius: 4px;
-}
+  }
 
-.response-type {
+  .response-type {
     float: right;
     font-size: 0.8em;
     color: #888;
-}
+  }
 
-.current-response {
+  .current-response {
     padding: 15px;
     margin-top: 15px;
-    background: #383838;
-    border-left: 4px solid #4f46e5;
+    background: #f3f4f6;
+    border-left: 4px solid #ff6600;
     border-radius: 4px;
-}
+  }
 </style>
 
 <script>
-let responseHistory = [];
-let isExpanded = false;
-let currentProblemId = '{{topicName}}/{{problemId}}';
-let canvas;
-let canvasHistory = [];
-let historyPosition = 0;
+  // (JavaScript remains unchanged except for potential console logs and error handling.)
+  let responseHistory = [];
+  let isExpanded = false;
+  let currentProblemId = '{{topicName}}/{{problemId}}';
+  let canvas;
+  let canvasHistory = [];
+  let historyPosition = 0;
 
-document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function() {
     clearHistory();
     initializeInputModes();
     initializeLatexPreview();
-});
+  });
 
-function clearHistory() {
+  function clearHistory() {
     responseHistory = [];
     document.getElementById('previousResponses').innerHTML = '';
     document.getElementById('currentResponse').innerHTML = '';
     document.getElementById('toggleBtn').textContent = 'Show Previous Responses (0)';
-}
+  }
 
-function initializeInputModes() {
+  function initializeInputModes() {
     const modeButtons = document.querySelectorAll('.input-mode-btn');
     const workAreas = {
-        text: document.getElementById('textWorkArea'),
-        latex: document.getElementById('latexWorkArea'),
-        canvas: document.getElementById('canvasWorkArea')
+      text: document.getElementById('textWorkArea'),
+      latex: document.getElementById('latexWorkArea'),
+      canvas: document.getElementById('canvasWorkArea')
     };
-    
-    modeButtons.forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const mode = btn.dataset.mode;
-            
-            modeButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            Object.values(workAreas).forEach(area => area.classList.add('hidden'));
-            workAreas[mode].classList.remove('hidden');
-            
-            if (mode === 'canvas' && !canvas) {
-                await initializeCanvas();
-            }
-        });
-    });
-}
 
-async function initializeCanvas() {
+    modeButtons.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const mode = btn.dataset.mode;
+
+        modeButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        Object.values(workAreas).forEach(area => area.classList.add('hidden'));
+        workAreas[mode].classList.remove('hidden');
+
+        if (mode === 'canvas' && !canvas) {
+          await initializeCanvas();
+        }
+      });
+    });
+  }
+
+  async function initializeCanvas() {
     const canvasEl = document.getElementById('drawing-canvas');
     if (!canvasEl || canvas) return;
 
-    console.log('Initializing canvas...'); // Debug log
-
+    console.log('Initializing canvas...');
     const container = canvasEl.parentElement;
     canvasEl.width = container.offsetWidth;
     canvasEl.height = 500;
 
-try {
-        // Wait for fabric to be available
-        if (!window.fabric) {
-            console.log('Waiting for Fabric.js to load...'); // Debug log
-            await new Promise(resolve => setTimeout(resolve, 500));
+    try {
+      if (!window.fabric) {
+        console.log('Waiting for Fabric.js to load...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      if (!window.fabric) {
+        throw new Error('Fabric.js failed to load');
+      }
+
+      canvas = new window.fabric.Canvas('drawing-canvas', {
+        isDrawingMode: true,
+        width: container.offsetWidth,
+        height: 500,
+        backgroundColor: 'white'
+      });
+
+      console.log('Canvas initialized successfully');
+
+      canvas.freeDrawingBrush = new window.fabric.PencilBrush(canvas);
+      canvas.freeDrawingBrush.width = parseInt(document.getElementById('brushSize').value) || 2;
+      canvas.freeDrawingBrush.color = document.getElementById('colorPicker').value || '#000000';
+
+      document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const tool = e.currentTarget.dataset.tool;
+          setTool(tool);
+          document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
+          e.currentTarget.classList.add('active');
+        });
+      });
+
+      document.getElementById('colorPicker').addEventListener('input', (e) => {
+        if (getCurrentTool() === 'pen') {
+          canvas.freeDrawingBrush.color = e.target.value;
         }
+      });
 
-        if (!window.fabric) {
-            throw new Error('Fabric.js failed to load');
-        }
-
-        canvas = new window.fabric.Canvas('drawing-canvas', {
-            isDrawingMode: true,
-            width: container.offsetWidth,
-            height: 500,
-            backgroundColor: 'white'
+      document.querySelectorAll('.color-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const color = e.target.dataset.color;
+          if (getCurrentTool() === 'pen') {
+            canvas.freeDrawingBrush.color = color;
+            document.getElementById('colorPicker').value = color;
+          }
         });
+      });
 
-        console.log('Canvas initialized successfully'); // Debug log
+      document.getElementById('brushSize').addEventListener('input', (e) => {
+        const size = parseInt(e.target.value);
+        canvas.freeDrawingBrush.width = size;
+        document.getElementById('brushSizeLabel').textContent = `${size}px`;
+      });
 
-        // Initialize default brush
-        canvas.freeDrawingBrush = new window.fabric.PencilBrush(canvas);
-        canvas.freeDrawingBrush.width = parseInt(document.getElementById('brushSize').value) || 2;
-        canvas.freeDrawingBrush.color = document.getElementById('colorPicker').value || '#000000';
-
-        // Add event listeners for tools
-        document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const tool = e.currentTarget.dataset.tool;
-                setTool(tool);
-                
-                document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
-                e.currentTarget.classList.add('active');
-            });
-        });
-
-        // Color picker and common colors
-        document.getElementById('colorPicker').addEventListener('input', (e) => {
-            if (getCurrentTool() === 'pen') {
-                canvas.freeDrawingBrush.color = e.target.value;
-            }
-        });
-
-        document.querySelectorAll('.color-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const color = e.target.dataset.color;
-                if (getCurrentTool() === 'pen') {
-                    canvas.freeDrawingBrush.color = color;
-                    document.getElementById('colorPicker').value = color;
-                }
-            });
-        });
-
-        // Brush size
-        document.getElementById('brushSize').addEventListener('input', (e) => {
-            const size = parseInt(e.target.value);
-            canvas.freeDrawingBrush.width = size;
-            document.getElementById('brushSizeLabel').textContent = `${size}px`;
-        });
-
-        // Canvas events for history
-        canvas.on('object:added', () => {
-            updateCanvasHistory();
-        });
-
-        // Undo/Redo buttons
-        document.getElementById('undoBtn').addEventListener('click', undo);
-        document.getElementById('redoBtn').addEventListener('click', redo);
-
-        // Clear canvas
-        document.getElementById('clearCanvas').addEventListener('click', () => {
-            canvas.clear();
-            canvas.backgroundColor = 'white';
-            canvas.renderAll();
-            updateCanvasHistory();
-        });
-
-        // Save initial state
+      canvas.on('object:added', () => {
         updateCanvasHistory();
+      });
 
+      document.getElementById('undoBtn').addEventListener('click', undo);
+      document.getElementById('redoBtn')?.addEventListener('click', redo);
+
+      document.getElementById('clearCanvas').addEventListener('click', () => {
+        canvas.clear();
+        canvas.backgroundColor = 'white';
+        canvas.renderAll();
+        updateCanvasHistory();
+      });
+
+      updateCanvasHistory();
     } catch (error) {
-        console.error('Error initializing canvas:', error);
+      console.error('Error initializing canvas:', error);
     }
-}
+  }
 
-function getCurrentTool() {
+  function getCurrentTool() {
     const activeToolBtn = document.querySelector('.tool-btn[data-tool].active');
     return activeToolBtn ? activeToolBtn.dataset.tool : 'pen';
-}
+  }
+
 function setTool(tool) {
     if (!canvas || !window.fabric) {
         console.warn('Canvas or Fabric.js not initialized yet');
@@ -517,187 +517,174 @@ function setTool(tool) {
     }
     
     try {
+        canvas.isDrawingMode = true;
+        canvas.freeDrawingBrush = new window.fabric.PencilBrush(canvas);
+        
         if (tool === 'pen') {
-            canvas.isDrawingMode = true;
-            canvas.freeDrawingBrush = new window.fabric.PencilBrush(canvas);
             canvas.freeDrawingBrush.color = document.getElementById('colorPicker').value;
-        } else if (tool === 'eraser') {
+            canvas.freeDrawingBrush.width = parseInt(document.getElementById('brushSize').value);
             canvas.isDrawingMode = true;
-            canvas.freeDrawingBrush = new window.fabric.PencilBrush(canvas);
-            canvas.freeDrawingBrush.color = '#FFFFFF';
+        } else if (tool === 'eraser') {
+            canvas.freeDrawingBrush.color = canvas.backgroundColor;
+            canvas.freeDrawingBrush.width = parseInt(document.getElementById('brushSize').value) * 2; // Make eraser slightly bigger
+            canvas.isDrawingMode = true;
         }
         
-        canvas.freeDrawingBrush.width = parseInt(document.getElementById('brushSize').value);
+        // Force a brush update
+        canvas.freeDrawingBrush.color = tool === 'pen' ? 
+            document.getElementById('colorPicker').value : 
+            canvas.backgroundColor;
     } catch (error) {
         console.error('Error setting tool:', error);
     }
 }
 
-function updateCanvasHistory() {
-    // Remove any states after current position if we're in the middle of history
+  function updateCanvasHistory() {
     canvasHistory = canvasHistory.slice(0, historyPosition + 1);
-    // Add current state to history
     canvasHistory.push(JSON.stringify(canvas));
-    // Move position to latest state
     historyPosition = canvasHistory.length - 1;
     updateUndoRedoButtons();
-}
+  }
 
-function undo() {
+  function undo() {
     if (historyPosition > 0) {
-        historyPosition--;
-        loadCanvasState(canvasHistory[historyPosition]);
-        updateUndoRedoButtons();
+      historyPosition--;
+      loadCanvasState(canvasHistory[historyPosition]);
+      updateUndoRedoButtons();
     }
-}
+  }
 
-function redo() {
+  function redo() {
     if (historyPosition < canvasHistory.length - 1) {
-        historyPosition++;
-        loadCanvasState(canvasHistory[historyPosition]);
-        updateUndoRedoButtons();
+      historyPosition++;
+      loadCanvasState(canvasHistory[historyPosition]);
+      updateUndoRedoButtons();
     }
-}
+  }
 
-function loadCanvasState(state) {
+  function loadCanvasState(state) {
     canvas.clear();
     canvas.loadFromJSON(state, () => {
-        canvas.renderAll();
-        canvas.backgroundColor = 'white';
+      canvas.renderAll();
+      canvas.backgroundColor = 'white';
     });
-}
+  }
 
-function updateUndoRedoButtons() {
+  function updateUndoRedoButtons() {
     const undoBtn = document.getElementById('undoBtn');
     const redoBtn = document.getElementById('redoBtn');
-    
     undoBtn.disabled = historyPosition <= 0;
     redoBtn.disabled = historyPosition >= canvasHistory.length - 1;
-    
     undoBtn.style.opacity = undoBtn.disabled ? '0.5' : '1';
     redoBtn.style.opacity = redoBtn.disabled ? '0.5' : '1';
-}
+  }
 
-// Initialize LaTeX preview
-function initializeLatexPreview() {
+  function initializeLatexPreview() {
     const latexInput = document.getElementById('latexInput');
     const latexPreview = document.getElementById('latexPreview');
-    
     let updateTimeout;
     latexInput?.addEventListener('input', function() {
-        clearTimeout(updateTimeout);
-        updateTimeout = setTimeout(() => {
-            latexPreview.innerHTML = this.value;
-            if (window.MathJax) {
-                window.MathJax.typeset([latexPreview]);
-            }
-        }, 300);
+      clearTimeout(updateTimeout);
+      updateTimeout = setTimeout(() => {
+        latexPreview.innerHTML = this.value;
+        if (window.MathJax) {
+          window.MathJax.typeset([latexPreview]);
+        }
+      }, 300);
     });
-}
+  }
 
-// Toggle response history
-function togglePreviousResponses() {
+  function togglePreviousResponses() {
     const previousResponses = document.getElementById('previousResponses');
     const toggleBtn = document.getElementById('toggleBtn');
     isExpanded = !isExpanded;
-    
     previousResponses.classList.toggle('expanded');
     toggleBtn.textContent = `${isExpanded ? 'Hide' : 'Show'} Previous Responses (${responseHistory.length})`;
-}
+  }
 
-// Get AI help
-async function getAIHelp(helpType) {
+  async function getAIHelp(helpType) {
     const helpQuery = document.getElementById('helpQuery');
     const currentResponse = document.getElementById('currentResponse');
-
-    // Get current work based on active mode
     const activeMode = document.querySelector('.input-mode-btn.active').dataset.mode;
     let work = '';
 
     switch (activeMode) {
-        case 'text':
-            work = document.getElementById('mainWorkArea').value;
-            break;
-        case 'latex':
-            work = document.getElementById('latexInput').value;
-            break;
-        case 'canvas':
-            if (canvas) {
-                // For now just indicate canvas work
-                work = '[Drawing submitted]';
-                // Later: Add drawing export functionality
-                // work = canvas.toDataURL();
-            }
-            break;
+      case 'text':
+        work = document.getElementById('mainWorkArea').value;
+        break;
+      case 'latex':
+        work = document.getElementById('latexInput').value;
+        break;
+      case 'canvas':
+        if (canvas) {
+          work = '[Drawing submitted]';
+        }
+        break;
     }
 
     if (currentResponse.innerHTML.trim()) {
-        responseHistory.push({
-            content: currentResponse.innerHTML,
-            type: helpType,
-            timestamp: new Date().toLocaleTimeString()
-        });
-        updateResponseHistory();
+      responseHistory.push({
+        content: currentResponse.innerHTML,
+        type: helpType,
+        timestamp: new Date().toLocaleTimeString()
+      });
+      updateResponseHistory();
     }
 
     currentResponse.innerHTML = 'Getting help...';
 
     try {
-        const response = await fetch('/api/help', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                helpType,
-                problem: {{{json problem}}},
-                work: work,
-                query: helpQuery.value,
-                hintHistory: helpType === 'hint' 
-                    ? responseHistory.filter(r => r.type === 'hint')
-                        .map(r => ({ content: r.content }))
-                    : []
-            })
-        });
+      const response = await fetch('/api/help', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          helpType,
+          problem: {{{json problem}}},
+          work: work,
+          query: helpQuery.value,
+          hintHistory: helpType === 'hint' 
+            ? responseHistory.filter(r => r.type === 'hint').map(r => ({ content: r.content }))
+            : []
+        })
+      });
 
-        if (!response.ok) throw new Error('Network response was not ok');
-        
-        const data = await response.json();
-        currentResponse.innerHTML = data.response;
+      if (!response.ok) throw new Error('Network response was not ok');
 
-        if (window.MathJax) {
-            window.MathJax.typeset([currentResponse]);
-        }
+      const data = await response.json();
+      currentResponse.innerHTML = data.response;
+      if (window.MathJax) {
+        window.MathJax.typeset([currentResponse]);
+      }
     } catch (error) {
-        console.error('Error:', error);
-        currentResponse.innerHTML = 'Sorry, there was an error getting help.';
+      console.error('Error:', error);
+      currentResponse.innerHTML = 'Sorry, there was an error getting help.';
     }
-}
+  }
 
-// Update response history display
-function updateResponseHistory() {
+  function updateResponseHistory() {
     const previousResponses = document.getElementById('previousResponses');
     previousResponses.innerHTML = responseHistory.map(response => `
-        <div class="response-entry">
-            <div class="response-type">${response.type} - ${response.timestamp}</div>
-            <div class="response-content">${response.content}</div>
-        </div>
+      <div class="response-entry">
+        <div class="response-type">${response.type} - ${response.timestamp}</div>
+        <div class="response-content">${response.content}</div>
+      </div>
     `).join('');
 
     document.getElementById('toggleBtn').textContent = 
-        `${isExpanded ? 'Hide' : 'Show'} Previous Responses (${responseHistory.length})`;
+      `${isExpanded ? 'Hide' : 'Show'} Previous Responses (${responseHistory.length})`;
 
     if (window.MathJax) {
-        window.MathJax.typeset([previousResponses]);
+      window.MathJax.typeset([previousResponses]);
     }
-}
+  }
 
-// Handle window resize
-window.addEventListener('resize', () => {
+  window.addEventListener('resize', () => {
     if (canvas) {
-        const container = document.getElementById('drawing-canvas').parentElement;
-        canvas.setDimensions({
-            width: container.offsetWidth,
-            height: 500
-        });
+      const container = document.getElementById('drawing-canvas').parentElement;
+      canvas.setDimensions({
+        width: container.offsetWidth,
+        height: 500
+      });
     }
-});
+  });
 </script>
