@@ -4,9 +4,16 @@ import express from 'express';
 import { engine } from 'express-handlebars';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import topicsRouter from './routes/topics.js';  // Note the .js extension
-import problemsRouter from './routes/problems.js';
 import Groq from 'groq-sdk'; 
+import connectDB from './config/db.js';
+import Problem from './models/Problem.js';
+
+// Import routes
+import topicsRouter from './routes/topics.js';            // UI routes
+import problemsRouter from './routes/problems.js';        // UI routes
+import topicsApiRouter from './routes/api/topics.js';     // API routes
+import problemsApiRouter from './routes/api/problems.js'; // API routes
+import authRouter from './routes/auth.js';
 
 // ES modules require these to get __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -20,6 +27,15 @@ const client = new Groq({
 
 app.use(express.json()); 
 
+app.use('/api/auth', authRouter);
+app.use('/topics', topicsRouter);     // For rendering topic pages
+app.use('/problems', problemsRouter);  // For rendering problem pages
+
+// API Routes
+app.use('/api/topics', topicsApiRouter);    // For topic data
+app.use('/api/problems', problemsApiRouter); // For problem data
+
+// In src/server.js, update the Handlebars configuration
 app.engine('hbs', engine({
     extname: '.hbs',
     defaultLayout: 'main',
@@ -41,34 +57,13 @@ app.engine('hbs', engine({
         toString: function(value) {
             return value.toString();
         },
-        merge: function(obj1, obj2) {
-            return { ...obj1, ...obj2 };
-        },
-        buildUrl: function(baseUrl, params) {
-            const searchParams = new URLSearchParams();
-            for (const [key, value] of Object.entries(params)) {
-                if (value !== undefined && value !== null) {
-                    searchParams.append(key, value);
-                }
-            }
-            const queryString = searchParams.toString();
-            return queryString ? `${baseUrl}?${queryString}` : baseUrl;
-        },
-        pageUrl: function(currentUrl, page, currentLevel) {
+        pageUrl: function(baseUrl, page, level) {
             const params = new URLSearchParams();
             params.set('page', page);
-            if (currentLevel && currentLevel !== 'all') {
-                params.set('level', currentLevel);
+            if (level && level !== 'all') {
+                params.set('level', level);
             }
-            return `${currentUrl}?${params.toString()}`;
-        }, 
-        object: function() {
-            const args = Array.from(arguments);
-            const obj = {};
-            for (let i = 0; i < args.length - 1; i += 2) {
-                obj[args[i]] = args[i + 1];
-            }
-            return obj;
+            return `${baseUrl}?${params.toString()}`;
         }
     }
 }));
@@ -81,6 +76,27 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/topics', topicsRouter);
 app.use('/problems', problemsRouter);
 
+
+// Auth page route
+app.get('/auth', (req, res) => {
+    res.render('auth', {
+        title: 'Login or Register - Math Learning Platform'
+    });
+});
+
+app.get('/api/test', async (req, res) => {
+  try {
+    const count = await Problem.countDocuments();
+    res.json({ 
+      message: 'MongoDB connection successful', 
+      problemCount: count 
+    });
+  } catch (error) {
+    console.error('Test endpoint error:', error);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
 app.get('/', (req, res) => {
     res.render('home', {
         title: 'Math Learning Platform',
@@ -90,7 +106,7 @@ app.get('/', (req, res) => {
 
 
 app.post('/api/help', async (req, res) => {
-    const { helpType, problem, work, query, hintHistory } = req.body;
+    const { helpType, problem, work, query, hintHistory, isCanvasMode } = req.body;
     
     // Handle empty work for validate and improve
     if ((helpType === 'validate' || helpType === 'improve') && !work.trim()) {
@@ -100,6 +116,40 @@ app.post('/api/help', async (req, res) => {
     }
 
     try {
+        let processedWork = work;
+        
+        // If canvas mode, first extract text from the image and then process normally
+        if (isCanvasMode) {
+            const base64Image = work.replace(/^data:image\/png;base64,/, '');
+            
+            // First use vision model to extract text
+            const extractionCompletion = await client.chat.completions.create({
+                model: "llama-3.2-90b-vision-preview",
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            {
+                                type: "text",
+                                text: `Output ONLY the exact mathematical expressions from the image in LaTeX. No explanations, no descriptions, no prefixes, no context - just the raw mathematical content.`
+                            },
+                            {
+                                type: "image_url",
+                                image_url: {
+                                    url: `data:image/png;base64,${base64Image}`
+                                }
+                            }
+                        ]
+                    }
+                ],
+                temperature: 0.1
+            });
+            
+            processedWork = extractionCompletion.choices[0].message.content;
+            console.log("Extracted text from image:", processedWork);
+        }
+
+        // Now process everything through the normal text flow
         const systemMessages = {
             hint: `You are helping a student solve a math problem. Give one brief, focused hint.
                   Be concise but make sure your explanation is complete.
@@ -177,7 +227,7 @@ app.post('/api/help', async (req, res) => {
         };
 
         let userMessage = `Problem: ${problem.problem}\n\n`;
-        userMessage += work ? `Student's work: ${work}\n\n` : '';
+        userMessage += processedWork ? `Student's work: ${processedWork}\n\n` : '';
         userMessage += query ? `Student's question: ${query}` : '';
         
         // Only include hint history for hint type
@@ -190,13 +240,13 @@ app.post('/api/help', async (req, res) => {
                 { role: "system", content: systemMessages[helpType] },
                 { role: "user", content: userMessage }
             ],
-            model: "llama3-70b-8192",
+            model: "llama-3.3-70b-versatile",
             temperature: 0.3
         });
 
         console.log("GROQ Response:", chatCompletion.choices[0].message.content);
-
         res.json({ response: chatCompletion.choices[0].message.content });
+
     } catch (error) {
         console.error('GROQ API Error:', error);
         res.status(500).json({ 
@@ -207,6 +257,7 @@ app.post('/api/help', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+await connectDB();
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
