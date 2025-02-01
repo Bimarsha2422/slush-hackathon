@@ -1,8 +1,32 @@
 <div class="problem-container">
   <div class="problem-header">
+    {{#if isAssignmentQuestion}}
+    <div class="flex justify-between items-center mb-4">
+      <div>
+        <a href="/student/classroom/{{assignmentContext.classroomId}}" class="text-orange-500 hover:text-orange-400">
+          ← Back to Classroom
+        </a>
+        <h2 class="mt-2 text-2xl font-bold">Question {{assignmentContext.questionNumber}} of {{assignmentContext.totalQuestions}}</h2>
+      </div>
+      <div class="flex items-center space-x-4">
+        {{#if assignmentContext.previousWork}}
+          {{#if assignmentContext.isComplete}}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+              Completed
+            </span>
+          {{else}}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+              In Progress
+            </span>
+          {{/if}}
+        {{/if}}
+      </div>
+    </div>
+    {{else}}
     <h2>{{problem.type}} - Level {{problem.level}}</h2>
     <a href="/topics/{{topicName}}" class="back-link">← Back to {{topicName}}</a>
-  </div>
+    {{/if}}
+</div>
 
   <div class="problem-content">
     <!-- Problem Statement -->
@@ -584,7 +608,8 @@ function setTool(tool) {
     toggleBtn.textContent = `${isExpanded ? 'Hide' : 'Show'} Previous Responses (${responseHistory.length})`;
   }
 
-  async function getAIHelp(helpType) {
+  // Add inside the getAIHelp function in problem.hbs
+async function getAIHelp(helpType) {
     const helpQuery = document.getElementById('helpQuery');
     const currentResponse = document.getElementById('currentResponse');
     const activeMode = document.querySelector('.input-mode-btn.active').dataset.mode;
@@ -599,10 +624,6 @@ function setTool(tool) {
         work = document.getElementById('latexInput').value;
         break;
       case 'canvas':
-        if (!canvas) {
-            throw new Error('Canvas not initialized');
-        }
-        // Convert canvas to image when in canvas mode
         work = canvas.toDataURL('image/png');
         isCanvasMode = true;
         break;
@@ -620,6 +641,19 @@ function setTool(tool) {
     currentResponse.innerHTML = 'Getting help...';
 
     try {
+      // Submit work to assignment if this is an assignment question
+      const assignmentContext = {{{json assignmentContext}}};
+      if (assignmentContext && helpType === 'validate') {
+        await fetch('/api/progress/submit/' + assignmentContext.assignmentId + '/' + assignmentContext.questionId, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            work: work,
+            mode: activeMode
+          })
+        });
+      }
+
       const response = await fetch('/api/help', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -639,6 +673,25 @@ function setTool(tool) {
 
       const data = await response.json();
       currentResponse.innerHTML = data.response;
+      
+      // Mark question as complete if validation is successful
+      if (helpType === 'validate' && 
+          data.response.toLowerCase().includes('correct') && 
+          assignmentContext) {
+        await fetch('/api/progress/complete/' + assignmentContext.assignmentId + '/' + assignmentContext.questionId, {
+          method: 'POST'
+        });
+        
+        // Add completion indicator
+        const header = document.querySelector('.problem-header');
+        const statusSpan = header.querySelector('.inline-flex') || document.createElement('span');
+        statusSpan.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
+        statusSpan.textContent = 'Completed';
+        if (!header.querySelector('.inline-flex')) {
+          header.querySelector('.flex.items-center.space-x-4').appendChild(statusSpan);
+        }
+      }
+
       if (window.MathJax) {
         window.MathJax.typeset([currentResponse]);
       }
@@ -646,7 +699,7 @@ function setTool(tool) {
       console.error('Error:', error);
       currentResponse.innerHTML = 'Sorry, there was an error getting help.';
     }
-  }
+}
 
   function updateResponseHistory() {
     const previousResponses = document.getElementById('previousResponses');
