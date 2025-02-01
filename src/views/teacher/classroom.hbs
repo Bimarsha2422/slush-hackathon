@@ -61,53 +61,70 @@
     <div id="assignments-tab" class="tab-content">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-xl font-semibold text-gray-900">Assignments</h2>
-        <button onclick="window.showCreateAssignmentModal()" 
-                class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm 
-                       text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
-          <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-          </svg>
-          New Assignment
-        </button>
+        <a href="/teacher/assignments/create/{{classroom._id}}" 
+   class="p-2 rounded-full bg-orange-600 hover:bg-orange-700 text-white shadow-sm transition-colors"
+   title="Create new assignment">
+  <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+  </svg>
+</a>
       </div>
 
-      {{!-- Assignment List --}}
-      <div class="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul class="divide-y divide-gray-200">
-          {{#each assignments}}
-          <li>
-            <a href="/teacher/assignments/{{this._id}}" class="block hover:bg-gray-50">
-              <div class="px-4 py-4 sm:px-6">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center">
-                    <p class="text-sm font-medium text-orange-600 truncate">{{this.title}}</p>
-                    {{#if this.dueDate}}
-                    <p class="ml-4 text-xs text-gray-500">Due: {{formatDate this.dueDate}}</p>
-                    {{/if}}
-                  </div>
-                  <div class="flex items-center">
-                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium
-                               {{#if this.active}}bg-green-100 text-green-800{{else}}bg-gray-100 text-gray-800{{/if}}">
-                      {{#if this.active}}Active{{else}}Inactive{{/if}}
-                    </span>
-                    <svg class="ml-4 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                  </div>
-                </div>
-                <div class="mt-2">
-                  <p class="text-sm text-gray-600 line-clamp-2">{{this.description}}</p>
-                  <div class="mt-2 flex items-center text-sm text-gray-500">
-                    <span>{{this.questions.length}} questions</span>
-                    <span class="mx-2">•</span>
-                    <span>{{this.submissionCount}} submissions</span>
-                  </div>
-                </div>
+      {{!-- Assignment Grid --}}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {{#each assignments}}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+          <div class="p-6">
+            <div class="flex justify-between items-start mb-4">
+              <h3 class="text-lg font-semibold text-gray-900">{{this.title}}</h3>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-medium
+                         {{#if this.active}}bg-green-100 text-green-800{{else}}bg-gray-100 text-gray-800{{/if}}">
+                {{#if this.active}}Active{{else}}Inactive{{/if}}
+              </span>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{this.description}}</p>
+            
+            <div class="space-y-2 text-sm text-gray-500">
+              {{#if this.dueDate}}
+              <div class="flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span>Due: {{formatDate this.dueDate}}</span>
               </div>
-            </a>
-          </li>
-          {{/each}}
-        </ul>
+              {{/if}}
+              
+              <div class="flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>{{this.questions.length}} questions</span>
+              </div>
+              
+              <div class="flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+                <span>{{this.submissionCount}} submissions</span>
+              </div>
+            </div>
+            
+            <div class="mt-6">
+              <a href="/teacher/assignments/{{this._id}}" 
+                 class="inline-flex items-center text-sm font-medium text-orange-600 hover:text-orange-700">
+                View Details
+                <svg class="ml-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+        {{/each}}
       </div>
     </div>
 
@@ -154,86 +171,54 @@
   </div>
 </div>
 
-{{!-- Create Assignment Modal --}}
-<div id="createAssignmentModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden">
-    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-        <div class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl sm:my-8 sm:w-full sm:max-w-3xl sm:p-6">
-            <div class="absolute right-0 top-0 pr-4 pt-4">
-                <button type="button" onclick="window.hideCreateAssignmentModal()" 
-                        class="rounded-md bg-white text-gray-400 hover:text-gray-500">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="sm:flex sm:items-start">
-                <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                    <h3 class="text-lg font-semibold leading-6 text-gray-900">Create New Assignment</h3>
-                    <div class="mt-4">
-                        <form id="createAssignmentForm" class="space-y-6">
-                            {{!-- Basic Info Section --}}
-                            <div class="space-y-4">
-                                <div>
-                                    <label for="assignmentTitle" class="block text-sm font-medium text-gray-700">Title</label>
-                                    <input type="text" name="title" id="assignmentTitle" required
-                                           class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
-                                                  focus:border-orange-500 focus:ring-orange-500">
-                                </div>
-
-                                <div>
-                                    <label for="assignmentDescription" class="block text-sm font-medium text-gray-700">Description</label>
-                                    <textarea name="description" id="assignmentDescription" rows="3"
-                                              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
-                                                     focus:border-orange-500 focus:ring-orange-500"></textarea>
-                                </div>
-
-                                <div>
-                                    <label for="dueDate" class="block text-sm font-medium text-gray-700">Due Date</label>
-                                    <input type="datetime-local" name="dueDate" id="dueDate"
-                                           class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
-                                                  focus:border-orange-500 focus:ring-orange-500">
-                                </div>
-                            </div>
-
-                            {{!-- Questions Section --}}
-                            <div>
-                                <div class="flex justify-between items-center mb-4">
-                                    <h4 class="text-base font-medium text-gray-900">Questions</h4>
-                                    <button type="button" onclick="addNewQuestion()"
-                                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm 
-                                                   font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700">
-                                        <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                        </svg>
-                                        Add Question
-                                    </button>
-                                </div>
-
-                                <div id="questions-container" class="space-y-4">
-                                    {{!-- Questions will be added here dynamically --}}
-                                </div>
-                            </div>
-
-                            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                                <button type="submit"
-                                        class="inline-flex w-full justify-center rounded-md bg-orange-600 px-3 py-2 
-                                               text-sm font-semibold text-white shadow-sm hover:bg-orange-500 sm:ml-3 sm:w-auto">
-                                    Create Assignment
-                                </button>
-                                <button type="button" onclick="window.hideCreateAssignmentModal()"
-                                        class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 
-                                               text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 
-                                               hover:bg-gray-50 sm:mt-0 sm:w-auto">
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+{{!-- Create Assignment Modal/Page --}}
+<div id="createAssignmentModal" class="fixed inset-0 bg-white z-50 overflow-y-auto hidden">
+  <div class="max-w-4xl mx-auto px-4 py-12">
+    <div class="flex items-center justify-between mb-8">
+      <h2 class="text-2xl font-bold text-gray-900">Create New Assignment</h2>
+      <button onclick="window.hideCreateAssignmentModal()" 
+              class="p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
     </div>
+
+    <form id="createAssignmentForm" class="space-y-8">
+      {{!-- Basic Info --}}
+      <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-lg font-semibold text-gray-900">Questions</h3>
+          <button type="button" onclick="addNewQuestion()"
+                  class="inline-flex items-center px-4 py-2 border border-transparent rounded-md 
+                         text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
+            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add Question
+          </button>
+        </div>
+
+        <div id="questions-container" class="space-y-6">
+          {{!-- Questions will be added here dynamically --}}
+        </div>
+      </div>
+
+      {{!-- Submit Button --}}
+      <div class="flex justify-end space-x-4">
+        <button type="button" onclick="window.hideCreateAssignmentModal()"
+                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 
+                       bg-white hover:bg-gray-50">
+          Cancel
+        </button>
+        <button type="submit"
+                class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white 
+                       bg-orange-600 hover:bg-orange-700">
+          Create Assignment
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
 {{!-- Classroom Settings Modal --}}
@@ -247,16 +232,16 @@
                         <div>
                             <label for="className" class="block text-sm font-medium text-gray-700">Class Name</label>
                             <input type="text" name="name" id="className" value="{{classroom.name}}" required
-                                   class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2">
+                                   class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 block text-sm font-medium text-gray-700">
                         </div>
                         <div>
                             <label for="classDescription" class="block text-sm font-medium text-gray-700">Description</label>
                             <textarea name="description" id="classDescription" rows="3"
-                                      class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2">{{classroom.description}}</textarea>
+                                      class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 block text-sm font-medium text-gray-700">{{classroom.description}}</textarea>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Status</label>
-                            <div class="mt-1">
+                            <div class="mt-1 block text-sm font-medium text-gray-700">
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="active" value="true" {{#if classroom.active}}checked{{/if}}
                                            class="form-radio text-orange-600">
@@ -326,9 +311,9 @@ function switchTab(tabName) {
 // Assignment Creation
 let questionCounter = 0;
 
-window.showCreateAssignmentModal = function() {
+{{!-- window.showCreateAssignmentModal = function() {
     document.getElementById('createAssignmentModal').classList.remove('hidden');
-};
+}; --}}
 
 window.hideCreateAssignmentModal = function() {
     document.getElementById('createAssignmentModal').classList.add('hidden');
@@ -343,39 +328,34 @@ function addNewQuestion() {
     const questionId = questionCounter++;
     
     const questionHtml = `
-        <div id="question-${questionId}" class="bg-gray-50 p-4 rounded-lg space-y-3">
-            <div class="flex justify-between">
-                <h5 class="text-sm font-medium text-gray-700">Question ${questionCounter}</h5>
+        <div id="question-${questionId}" class="bg-gray-50 rounded-lg p-6 space-y-4">
+            <div class="flex justify-between items-start">
+                <h4 class="text-base font-medium text-gray-900">Question ${questionCounter}</h4>
                 <button type="button" onclick="removeQuestion(${questionId})"
-                        class="text-gray-400 hover:text-red-500">
+                        class="p-1 text-gray-400 hover:text-red-500">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
+
             <div>
-                <label class="block text-sm font-medium text-gray-700">Question Text</label>
-                <textarea name="questions[${questionId}][question]" rows="3" required
-                          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
+                <label class="block text-sm font-medium text-gray-700 mb-2">Question</label>
+                <textarea name="questions[${questionId}][question]" rows="4" required
+                          class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
                                  focus:border-orange-500 focus:ring-orange-500"
                           placeholder="Enter your question here..."></textarea>
             </div>
+
             <div>
-                <label class="block text-sm font-medium text-gray-700">Solution (Optional)</label>
-                <textarea name="questions[${questionId}][solution]" rows="2"
-                          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
+                <label class="block text-sm font-medium text-gray-700 mb-2">Answer (Optional)</label>
+                <textarea name="questions[${questionId}][solution]" rows="3"
+                          class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
                                  focus:border-orange-500 focus:ring-orange-500"
-                          placeholder="Enter the solution here..."></textarea>
+                          placeholder="Enter the answer here..."></textarea>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Type</label>
-                <select name="questions[${questionId}][type]"
-                        class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
-                               focus:border-orange-500 focus:ring-orange-500">
-                    <option value="math">Math</option>
-                    <option value="multiple-choice">Multiple Choice</option>
-                </select>
-            </div>
+
+            <input type="hidden" name="questions[${questionId}][type]" value="math">
         </div>
     `;
     
@@ -519,4 +499,165 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Failed to update classroom: ' + error.message);
         }
     });
-});</script>
+});
+</script>
+
+<script>
+// Assignment Creation
+let questionCounter = 0;
+
+{{!-- window.showCreateAssignmentModal = function() {
+    document.getElementById('createAssignmentModal').classList.remove('hidden');
+}; --}}
+
+window.hideCreateAssignmentModal = function() {
+    document.getElementById('createAssignmentModal').classList.add('hidden');
+    // Reset form
+    document.getElementById('createAssignmentForm').reset();
+    document.getElementById('questions-container').innerHTML = '';
+    document.getElementById('no-questions').style.display = 'block';
+    questionCounter = 0;
+};
+
+function addNewQuestion() {
+    const container = document.getElementById('questions-container');
+    const noQuestions = document.getElementById('no-questions');
+    const questionId = questionCounter++;
+    
+    // Hide the "no questions" message when adding the first question
+    if (noQuestions) {
+        noQuestions.style.display = 'none';
+    }
+    
+    const questionHtml = `
+        <div id="question-${questionId}" class="bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div class="p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <span class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-full bg-orange-100 text-orange-600 text-sm font-medium">
+                            ${questionCounter}
+                        </span>
+                        <h4 class="ml-3 text-base font-medium text-gray-900">Question ${questionCounter}</h4>
+                    </div>
+                    <button type="button" onclick="removeQuestion(${questionId})"
+                            class="p-2 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            title="Remove question">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
+                    <div class="relative">
+                        <textarea name="questions[${questionId}][question]" rows="4" required
+                                  class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
+                                         focus:border-orange-500 focus:ring-orange-500 resize-none"
+                                  placeholder="Write your math question here..."></textarea>
+                        <div class="absolute bottom-2 right-2 text-xs text-gray-400">
+                            Use LaTeX for equations, e.g., \\( x^2 \\)
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Solution (Optional)</label>
+                    <div class="relative">
+                        <textarea name="questions[${questionId}][solution]" rows="3"
+                                  class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
+                                         focus:border-orange-500 focus:ring-orange-500 resize-none"
+                                  placeholder="Enter the solution or answer key..."></textarea>
+                        <div class="absolute bottom-2 right-2 text-xs text-gray-400">
+                            Include step-by-step solution if needed
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" name="questions[${questionId}][type]" value="math">
+            </div>
+        </div>
+    `;
+    
+    const temp = document.createElement('div');
+    temp.innerHTML = questionHtml;
+    container.appendChild(temp.firstElementChild);
+}
+
+function removeQuestion(questionId) {
+    const question = document.getElementById(`question-${questionId}`);
+    const questionsContainer = document.getElementById('questions-container');
+    const noQuestions = document.getElementById('no-questions');
+
+    // Add a subtle fade-out effect before removing
+    question.style.transition = 'opacity 0.2s ease-out';
+    question.style.opacity = '0';
+    
+    setTimeout(() => {
+        question.remove();
+        
+        // Show the "no questions" message if this was the last question
+        if (questionsContainer.children.length === 0 && noQuestions) {
+            noQuestions.style.display = 'block';
+        }
+    }, 200);
+}
+
+// Form Submissions
+document.addEventListener('DOMContentLoaded', function() {
+    // Assignment creation form handler
+    document.getElementById('createAssignmentForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const formData = new FormData(e.target);
+            const questions = [];
+            
+            // Process questions data
+            const questionElements = document.querySelectorAll('[id^="question-"]');
+            questionElements.forEach((element, index) => {
+                questions.push({
+                    question: formData.get(`questions[${index}][question]`),
+                    solution: formData.get(`questions[${index}][solution]`),
+                    type: formData.get(`questions[${index}][type]`)
+                });
+            });
+
+            if (questions.length === 0) {
+                throw new Error('Please add at least one question to the assignment');
+            }
+
+            const response = await fetch('/api/assignments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    classroomId: '{{classroom._id}}',
+                    title: formData.get('title'),
+                    description: formData.get('description'),
+                    dueDate: formData.get('dueDate'),
+                    questions: questions
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to create assignment');
+            }
+
+            const assignment = await response.json();
+            console.log('Created assignment:', assignment);
+            
+            // Hide modal and reset form
+            window.hideCreateAssignmentModal();
+            
+            // Refresh the page to show new assignment
+            window.location.reload();
+        } catch (error) {
+            console.error('Error creating assignment:', error);
+            alert(error.message);
+        }
+    });
+});
+</script>

@@ -45,11 +45,11 @@
                         <div class="flex justify-between items-start">
                             <div>
                                 <h3 class="text-lg font-medium text-gray-900">{{this.name}}</h3>
-                                <p class="mt-1 text-sm text-gray-600">{{this.students.length}} students</p>
+    
                             </div>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                       {{#if this.active}}bg-green-100 text-green-800{{else}}bg-gray-100 text-gray-800{{/if}}">
-                                {{#if this.active}}Active{{else}}Inactive{{/if}}
+                                       {{#if this.active}}bg-green-100 text-green-800{{else}}bg-green-100 text-green-800{{/if}}">
+                                {{#if this.active}}Active{{else}}Active{{/if}}
                             </span>
                         </div>
                         <p class="mt-2 text-sm text-gray-600 line-clamp-2">{{this.description}}</p>

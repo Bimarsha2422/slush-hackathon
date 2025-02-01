@@ -137,4 +137,79 @@ router.get('/classroom/:id', authPage(['teacher']), async (req, res) => {
     }
 });
 
+// GET route to show the create assignment form
+router.get('/assignments/create/:classroomId', authPage(['teacher']), async (req, res) => {
+    try {
+        // First verify the teacher owns this classroom
+        const classroom = await Classroom.findOne({
+            _id: req.params.classroomId,
+            teacherId: req.user._id
+        }).populate('students', 'name email');
+
+        if (!classroom) {
+            return res.status(404).render('error', {
+                message: 'Classroom not found'
+            });
+        }
+
+        res.render('teacher/create-assignment', {
+            title: 'Create Assignment',
+            classroom: classroom.toObject()
+        });
+    } catch (error) {
+        console.error('Error loading create assignment page:', error);
+        res.status(500).render('error', {
+            message: 'Error loading create assignment page'
+        });
+    }
+});
+
+// POST route to handle the assignment creation
+router.post('/assignments/create', authPage(['teacher']), async (req, res) => {
+    try {
+        const { classroomId, title, description, dueDate, questions } = req.body;
+
+        // Verify the teacher owns this classroom
+        const classroom = await Classroom.findOne({
+            _id: classroomId,
+            teacherId: req.user._id
+        });
+
+        if (!classroom) {
+            return res.status(404).json({ error: 'Classroom not found' });
+        }
+
+        // Create the assignment
+        const assignment = new Assignment({
+            classroomId,
+            title,
+            description,
+            dueDate: dueDate || undefined,
+            questions: questions.map(q => ({
+                question: q.question,
+                solution: q.solution,
+                type: 'math'
+            }))
+        });
+
+        await assignment.save();
+
+        // Create StudentAssignment records for all students
+        if (classroom.students.length > 0) {
+            const studentAssignments = classroom.students.map(studentId => ({
+                studentId,
+                assignmentId: assignment._id,
+                classroomId
+            }));
+            await StudentAssignment.insertMany(studentAssignments);
+        }
+
+        // Redirect back to classroom page
+        res.redirect(`/teacher/classroom/${classroomId}`);
+    } catch (error) {
+        console.error('Error creating assignment:', error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
 export default router;
