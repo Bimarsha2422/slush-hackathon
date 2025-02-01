@@ -169,7 +169,70 @@ router.get('/assignment/:id', authPage(['student']), async (req, res) => {
     }
 });
 
+
 // View specific assignment question
+// router.get('/assignment/:assignmentId/question/:questionId', authPage(['student']), async (req, res) => {
+//     try {
+//         const assignment = await Assignment.findById(req.params.assignmentId)
+//             .populate('classroomId');
+
+//         if (!assignment) {
+//             return res.status(404).render('error', {
+//                 message: 'Assignment not found'
+//             });
+//         }
+
+//         // Find the specific question
+//         const question = assignment.questions.find(q => 
+//             q._id.toString() === req.params.questionId
+//         );
+
+//         if (!question) {
+//             return res.status(404).render('error', {
+//                 message: 'Question not found'
+//             });
+//         }
+
+//         // Get student's progress for this question
+//         const studentAssignment = await StudentAssignment.findOne({
+//             studentId: req.user._id,
+//             assignmentId: assignment._id
+//         });
+
+//         const submission = studentAssignment?.submissions?.find(s => 
+//             s.questionId.toString() === question._id.toString()
+//         );
+
+//         // Format question for the problem interface
+//         const problemData = {
+//             problem: question.question,
+//             solution: question.solution,
+//             type: question.type || 'math',
+//             level: 'Assignment Question',
+//             topic: assignment.classroomId.name
+//         };
+
+//         res.render('problem', {
+//             title: `${assignment.title} - Question ${assignment.questions.indexOf(question) + 1}`,
+//             problem: problemData,
+//             assignmentContext: {
+//                 assignmentId: assignment._id,
+//                 questionId: question._id,
+//                 classroomId: assignment.classroomId._id,
+//                 questionNumber: assignment.questions.indexOf(question) + 1,
+//                 totalQuestions: assignment.questions.length,
+//                 previousWork: submission?.work,
+//                 isComplete: submission?.isComplete || false
+//             },
+//             isAssignmentQuestion: true
+//         });
+//     } catch (error) {
+//         console.error('Error loading assignment question:', error);
+//         res.status(500).render('error', {
+//             message: 'Error loading question'
+//         });
+//     }
+// });
 router.get('/assignment/:assignmentId/question/:questionId', authPage(['student']), async (req, res) => {
     try {
         const assignment = await Assignment.findById(req.params.assignmentId)
@@ -181,47 +244,44 @@ router.get('/assignment/:assignmentId/question/:questionId', authPage(['student'
             });
         }
 
-        // Find the specific question
-        const question = assignment.questions.find(q => 
-            q._id.toString() === req.params.questionId
-        );
-
+        const question = assignment.questions.id(req.params.questionId);
         if (!question) {
             return res.status(404).render('error', {
                 message: 'Question not found'
             });
         }
 
-        // Get student's progress for this question
+        // Get student's progress
         const studentAssignment = await StudentAssignment.findOne({
             studentId: req.user._id,
             assignmentId: assignment._id
         });
 
+        // Find saved work for this question
         const submission = studentAssignment?.submissions?.find(s => 
             s.questionId.toString() === question._id.toString()
         );
 
-        // Format question for the problem interface
+        // Format problem data
         const problemData = {
             problem: question.question,
             solution: question.solution,
             type: question.type || 'math',
-            level: 'Assignment Question',
-            topic: assignment.classroomId.name
+            level: 'Assignment Question'
         };
 
         res.render('problem', {
             title: `${assignment.title} - Question ${assignment.questions.indexOf(question) + 1}`,
             problem: problemData,
+            savedWork: submission?.work || '',         // Pass saved work
+            workMode: submission?.mode || 'text',      // Pass saved mode
             assignmentContext: {
                 assignmentId: assignment._id,
                 questionId: question._id,
                 classroomId: assignment.classroomId._id,
                 questionNumber: assignment.questions.indexOf(question) + 1,
                 totalQuestions: assignment.questions.length,
-                previousWork: submission?.work,
-                isComplete: submission?.isComplete || false
+                status: submission?.status || 'not_started'
             },
             isAssignmentQuestion: true
         });
@@ -229,6 +289,69 @@ router.get('/assignment/:assignmentId/question/:questionId', authPage(['student'
         console.error('Error loading assignment question:', error);
         res.status(500).render('error', {
             message: 'Error loading question'
+        });
+    }
+});
+
+router.post('/assignment/:assignmentId/question/:questionId/save', authPage(['student']), async (req, res) => {
+    try {
+        const { assignmentId, questionId } = req.params;
+        const { work, mode } = req.body;
+
+        // Input validation
+        if (!work && mode !== 'canvas') {
+            return res.status(400).json({ error: 'No work provided' });
+        }
+
+        let studentAssignment = await StudentAssignment.findOne({
+            studentId: req.user._id,
+            assignmentId
+        });
+
+        if (!studentAssignment) {
+            return res.status(404).json({ error: 'Assignment progress not found' });
+        }
+
+        // Find or initialize submission
+        let submission = studentAssignment.submissions.find(s => 
+            s.questionId.toString() === questionId
+        );
+
+        if (submission) {
+            // Update existing submission
+            submission.work = work;
+            submission.mode = mode;
+            submission.lastUpdated = new Date();
+            if (submission.status === 'not_started') {
+                submission.status = 'in_progress';
+            }
+        } else {
+            // Create new submission
+            studentAssignment.submissions.push({
+                questionId,
+                work,
+                mode,
+                status: 'in_progress',
+                lastUpdated: new Date()
+            });
+        }
+
+        // Update overall assignment status
+        if (studentAssignment.status === 'not_started') {
+            studentAssignment.status = 'in_progress';
+        }
+
+        await studentAssignment.save();
+
+        res.json({ 
+            status: 'success',
+            message: 'Progress saved successfully'
+        });
+    } catch (error) {
+        console.error('Error saving progress:', error);
+        res.status(500).json({ 
+            error: 'Failed to save progress',
+            details: error.message 
         });
     }
 });
@@ -374,36 +497,6 @@ router.post('/assignment/:assignmentId/question/:questionId/complete', authPage(
     }
 });
 
-router.post('/assignment/:assignmentId/question/:questionId/save', authPage(['student']), async (req, res) => {
-    try {
-        const { assignmentId, questionId } = req.params;
-        const { work, mode } = req.body;
-
-        let studentAssignment = await StudentAssignment.findOne({
-            studentId: req.user._id,
-            assignmentId
-        });
-
-        if (!studentAssignment) {
-            return res.status(404).json({ error: 'Assignment progress not found' });
-        }
-
-        // Save the work
-        await studentAssignment.addSubmission(questionId, work, mode);
-
-        res.json({ 
-            status: 'success',
-            message: 'Progress saved successfully',
-            timestamp: new Date()
-        });
-    } catch (error) {
-        console.error('Error saving progress:', error);
-        res.status(500).json({ 
-            error: 'Failed to save progress',
-            message: error.message
-        });
-    }
-});
 
 function extractPoints(feedback, type) {
     // Simple extraction - can be made more sophisticated
