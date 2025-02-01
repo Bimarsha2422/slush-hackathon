@@ -14,7 +14,7 @@
             <p class="text-sm text-gray-600">Join Code:</p>
             <div class="flex items-center space-x-2">
               <span class="text-lg font-mono font-bold text-orange-600">{{classroom.code}}</span>
-              <button onclick="generateNewCode()" 
+              <button onclick="window.generateNewCode()" 
                       class="text-orange-600 hover:text-orange-500"
                       title="Generate New Code">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -25,7 +25,7 @@
             </div>
           </div>
           {{!-- Settings Button --}}
-          <button onclick="showClassroomSettings()" 
+          <button onclick="window.showClassroomSettings()" 
                   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md 
                          shadow-sm text-sm font-medium text-gray-700 bg-white 
                          hover:bg-gray-50 focus:outline-none focus:ring-2 
@@ -43,14 +43,15 @@
 
     {{!-- Main Content Tabs --}}
     <div class="border-b border-gray-200 mb-8">
-      <nav class="-mb-px flex space-x-8">
-        <button onclick="switchTab('assignments')" 
-                class="tab-button border-orange-500 text-orange-600 whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
+      <nav class="-mb-px flex space-x-8 gap-4">
+        <button id="assignmentsTab"
+                class="tab-button text-sm font-medium pb-4 px-1 border-b-2 transition-colors"
+                onclick="switchTab('assignments')">
           Assignments
         </button>
-        <button onclick="switchTab('students')" 
-                class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 
-                       whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
+        <button id="studentsTab"
+                class="tab-button text-sm font-medium pb-4 px-1 border-b-2 transition-colors"
+                onclick="switchTab('students')">
           Students
         </button>
       </nav>
@@ -60,7 +61,7 @@
     <div id="assignments-tab" class="tab-content">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-xl font-semibold text-gray-900">Assignments</h2>
-        <button onclick="showCreateAssignmentModal()" 
+        <button onclick="window.showCreateAssignmentModal()" 
                 class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm 
                        text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
           <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -136,7 +137,7 @@
                   <p class="text-sm text-gray-500">{{this.email}}</p>
                 </div>
               </div>
-              <button onclick="removeStudent('{{this._id}}')" 
+              <button onclick="window.removeStudent('{{this._id}}')" 
                       class="inline-flex items-center p-1 border border-transparent rounded-full 
                              shadow-sm text-white bg-red-600 hover:bg-red-700"
                       title="Remove student">
@@ -153,95 +154,251 @@
   </div>
 </div>
 
+{{!-- Create Assignment Modal --}}
+<div id="createAssignmentModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden">
+    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl sm:my-8 sm:w-full sm:max-w-3xl sm:p-6">
+            <div class="absolute right-0 top-0 pr-4 pt-4">
+                <button type="button" onclick="window.hideCreateAssignmentModal()" 
+                        class="rounded-md bg-white text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="sm:flex sm:items-start">
+                <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                    <h3 class="text-lg font-semibold leading-6 text-gray-900">Create New Assignment</h3>
+                    <div class="mt-4">
+                        <form id="createAssignmentForm" class="space-y-6">
+                            {{!-- Basic Info Section --}}
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="assignmentTitle" class="block text-sm font-medium text-gray-700">Title</label>
+                                    <input type="text" name="title" id="assignmentTitle" required
+                                           class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
+                                                  focus:border-orange-500 focus:ring-orange-500">
+                                </div>
+
+                                <div>
+                                    <label for="assignmentDescription" class="block text-sm font-medium text-gray-700">Description</label>
+                                    <textarea name="description" id="assignmentDescription" rows="3"
+                                              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
+                                                     focus:border-orange-500 focus:ring-orange-500"></textarea>
+                                </div>
+
+                                <div>
+                                    <label for="dueDate" class="block text-sm font-medium text-gray-700">Due Date</label>
+                                    <input type="datetime-local" name="dueDate" id="dueDate"
+                                           class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
+                                                  focus:border-orange-500 focus:ring-orange-500">
+                                </div>
+                            </div>
+
+                            {{!-- Questions Section --}}
+                            <div>
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="text-base font-medium text-gray-900">Questions</h4>
+                                    <button type="button" onclick="addNewQuestion()"
+                                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm 
+                                                   font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                        </svg>
+                                        Add Question
+                                    </button>
+                                </div>
+
+                                <div id="questions-container" class="space-y-4">
+                                    {{!-- Questions will be added here dynamically --}}
+                                </div>
+                            </div>
+
+                            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                                <button type="submit"
+                                        class="inline-flex w-full justify-center rounded-md bg-orange-600 px-3 py-2 
+                                               text-sm font-semibold text-white shadow-sm hover:bg-orange-500 sm:ml-3 sm:w-auto">
+                                    Create Assignment
+                                </button>
+                                <button type="button" onclick="window.hideCreateAssignmentModal()"
+                                        class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 
+                                               text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 
+                                               hover:bg-gray-50 sm:mt-0 sm:w-auto">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{!-- Classroom Settings Modal --}}
 <div id="classroomSettingsModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden">
-  <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-    <div class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
-      <div class="sm:flex sm:items-start">
-        <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
-          <h3 class="text-lg font-semibold leading-6 text-gray-900">Classroom Settings</h3>
-          <form id="classroomSettingsForm" class="mt-4 space-y-4">
-            <div>
-              <label for="className" class="block text-sm font-medium text-gray-700">Class Name</label>
-              <input type="text" name="name" id="className" value="{{classroom.name}}" required
-                     class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2">
+    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <div class="sm:flex sm:items-start">
+                <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                    <h3 class="text-lg font-semibold leading-6 text-gray-900">Classroom Settings</h3>
+                    <form id="classroomSettingsForm" class="mt-4 space-y-4">
+                        <div>
+                            <label for="className" class="block text-sm font-medium text-gray-700">Class Name</label>
+                            <input type="text" name="name" id="className" value="{{classroom.name}}" required
+                                   class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2">
+                        </div>
+                        <div>
+                            <label for="classDescription" class="block text-sm font-medium text-gray-700">Description</label>
+                            <textarea name="description" id="classDescription" rows="3"
+                                      class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2">{{classroom.description}}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Status</label>
+                            <div class="mt-1">
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="active" value="true" {{#if classroom.active}}checked{{/if}}
+                                           class="form-radio text-orange-600">
+                                    <span class="ml-2">Active</span>
+                                </label>
+                                <label class="inline-flex items-center ml-6">
+                                    <input type="radio" name="active" value="false" {{#unless classroom.active}}checked{{/unless}}
+                                           class="form-radio text-orange-600">
+                                    <span class="ml-2">Inactive</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                            <button type="submit"
+                                    class="inline-flex w-full justify-center rounded-md bg-orange-600 px-3 py-2 
+                                           text-sm font-semibold text-white shadow-sm hover:bg-orange-500 sm:ml-3 sm:w-auto">
+                                Save Changes
+                            </button>
+                            <button type="button" onclick="window.hideClassroomSettings()"
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 
+                                           text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 
+                                           hover:bg-gray-50 sm:mt-0 sm:w-auto">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div>
-              <label for="classDescription" class="block text-sm font-medium text-gray-700">Description</label>
-              <textarea name="description" id="classDescription" rows="3"
-                        class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2">{{classroom.description}}</textarea>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Status</label>
-              <div class="mt-1">
-                <label class="inline-flex items-center">
-                  <input type="radio" name="active" value="true" {{#if classroom.active}}checked{{/if}}
-                         class="form-radio text-orange-600">
-                  <span class="ml-2">Active</span>
-                </label>
-                <label class="inline-flex items-center ml-6">
-                  <input type="radio" name="active" value="false" {{#unless classroom.active}}checked{{/unless}}
-                         class="form-radio text-orange-600">
-                  <span class="ml-2">Inactive</span>
-                </label>
-              </div>
-            </div>
-            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-              <button type="submit"
-                      class="inline-flex w-full justify-center rounded-md bg-orange-600 px-3 py-2 
-                             text-sm font-semibold text-white shadow-sm hover:bg-orange-500 sm:ml-3 sm:w-auto">
-                Save Changes
-              </button>
-              <button type="button" onclick="hideClassroomSettings()"
-                      class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 
-                             text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 
-                             hover:bg-gray-50 sm:mt-0 sm:w-auto">
-                Cancel
-              </button>
-            </div>
-          </form>
         </div>
-      </div>
     </div>
-  </div>
 </div>
 
 <script>
 // Tab Management
 function switchTab(tabName) {
-    const tabs = document.querySelectorAll('.tab-button');
-    const contents = document.querySelectorAll('.tab-content');
+    // Get tab buttons
+    const assignmentsTab = document.getElementById('assignmentsTab');
+    const studentsTab = document.getElementById('studentsTab');
     
-    tabs.forEach(tab => {
-        if (tab.textContent.trim().toLowerCase() === tabName) {
-            tab.classList.add('border-orange-500', 'text-orange-600');
-            tab.classList.remove('border-transparent', 'text-gray-500');
-        } else {
-            tab.classList.remove('border-orange-500', 'text-orange-600');
-            tab.classList.add('border-transparent', 'text-gray-500');
-        }
-    });
+    // Get content divs
+    const assignmentsContent = document.getElementById('assignments-tab');
+    const studentsContent = document.getElementById('students-tab');
     
-    contents.forEach(content => {
-        if (content.id === `${tabName}-tab`) {
-            content.classList.remove('hidden');
-        } else {
-            content.classList.add('hidden');
-        }
-    });
+    if (tabName === 'assignments') {
+        // Update tab styles
+        assignmentsTab.classList.add('border-orange-500', 'text-orange-600');
+        assignmentsTab.classList.remove('border-transparent', 'text-gray-500');
+        studentsTab.classList.add('border-transparent', 'text-gray-500');
+        studentsTab.classList.remove('border-orange-500', 'text-orange-600');
+        
+        // Show/hide content
+        assignmentsContent.classList.remove('hidden');
+        studentsContent.classList.add('hidden');
+    } else {
+        // Update tab styles
+        studentsTab.classList.add('border-orange-500', 'text-orange-600');
+        studentsTab.classList.remove('border-transparent', 'text-gray-500');
+        assignmentsTab.classList.add('border-transparent', 'text-gray-500');
+        assignmentsTab.classList.remove('border-orange-500', 'text-orange-600');
+        
+        // Show/hide content
+        studentsContent.classList.remove('hidden');
+        assignmentsContent.classList.add('hidden');
+    }
 }
 
-// Modal Management
-function showClassroomSettings() {
-    document.getElementById('classroomSettingsModal').classList.remove('hidden');
+// Assignment Creation
+let questionCounter = 0;
+
+window.showCreateAssignmentModal = function() {
+    document.getElementById('createAssignmentModal').classList.remove('hidden');
+};
+
+window.hideCreateAssignmentModal = function() {
+    document.getElementById('createAssignmentModal').classList.add('hidden');
+    // Reset form
+    document.getElementById('createAssignmentForm').reset();
+    document.getElementById('questions-container').innerHTML = '';
+    questionCounter = 0;
+};
+
+function addNewQuestion() {
+    const container = document.getElementById('questions-container');
+    const questionId = questionCounter++;
+    
+    const questionHtml = `
+        <div id="question-${questionId}" class="bg-gray-50 p-4 rounded-lg space-y-3">
+            <div class="flex justify-between">
+                <h5 class="text-sm font-medium text-gray-700">Question ${questionCounter}</h5>
+                <button type="button" onclick="removeQuestion(${questionId})"
+                        class="text-gray-400 hover:text-red-500">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Question Text</label>
+                <textarea name="questions[${questionId}][question]" rows="3" required
+                          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
+                                 focus:border-orange-500 focus:ring-orange-500"
+                          placeholder="Enter your question here..."></textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Solution (Optional)</label>
+                <textarea name="questions[${questionId}][solution]" rows="2"
+                          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
+                                 focus:border-orange-500 focus:ring-orange-500"
+                          placeholder="Enter the solution here..."></textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Type</label>
+                <select name="questions[${questionId}][type]"
+                        class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
+                               focus:border-orange-500 focus:ring-orange-500">
+                    <option value="math">Math</option>
+                    <option value="multiple-choice">Multiple Choice</option>
+                </select>
+            </div>
+        </div>
+    `;
+    
+    const temp = document.createElement('div');
+    temp.innerHTML = questionHtml;
+    container.appendChild(temp.firstElementChild);
 }
 
-function hideClassroomSettings() {
-    document.getElementById('classroomSettingsModal').classList.add('hidden');
+function removeQuestion(questionId) {
+    const question = document.getElementById(`question-${questionId}`);
+    question.remove();
 }
 
 // Classroom Management
-async function generateNewCode() {
+window.showClassroomSettings = function() {
+    document.getElementById('classroomSettingsModal').classList.remove('hidden');
+};
+
+window.hideClassroomSettings = function() {
+    document.getElementById('classroomSettingsModal').classList.add('hidden');
+};
+
+window.generateNewCode = async function() {
     try {
         const response = await fetch(`/api/classrooms/{{classroom._id}}/new-code`, {
             method: 'POST'
@@ -255,9 +412,9 @@ async function generateNewCode() {
         console.error('Error generating new code:', error);
         alert('Failed to generate new code. Please try again.');
     }
-}
+};
 
-async function removeStudent(studentId) {
+window.removeStudent = async function(studentId) {
     if (!confirm('Are you sure you want to remove this student from the classroom?')) {
         return;
     }
@@ -274,33 +431,92 @@ async function removeStudent(studentId) {
         console.error('Error removing student:', error);
         alert('Failed to remove student. Please try again.');
     }
-}
+};
 
 // Form Submissions
-document.getElementById('classroomSettingsForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    try {
-        const formData = new FormData(e.target);
-        const response = await fetch('/api/classrooms/{{classroom._id}}', {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                name: formData.get('name'),
-                description: formData.get('description'),
-                active: formData.get('active') === 'true'
-            })
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tab state
+    switchTab('assignments');
 
-        if (!response.ok) throw new Error('Failed to update classroom');
+    // Assignment creation form handler
+    document.getElementById('createAssignmentForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const formData = new FormData(e.target);
+            const questions = [];
+            
+            // Process questions data
+            const questionElements = document.querySelectorAll('[id^="question-"]');
+            questionElements.forEach((element, index) => {
+                questions.push({
+                    question: formData.get(`questions[${index}][question]`),
+                    solution: formData.get(`questions[${index}][solution]`),
+                    type: formData.get(`questions[${index}][type]`)
+                });
+            });
 
-        hideClassroomSettings();
-        window.location.reload();
-    } catch (error) {
-        console.error('Error updating classroom:', error);
-        alert('Failed to update classroom. Please try again.');
-    }
-});
-</script>
+            const response = await fetch('/api/assignments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    classroomId: '{{classroom._id}}',
+                    title: formData.get('title'),
+                    description: formData.get('description'),
+                    dueDate: formData.get('dueDate'),
+                    questions: questions
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to create assignment');
+            }
+
+            const assignment = await response.json();
+            console.log('Created assignment:', assignment);
+            
+            // Hide modal and reset form
+            window.hideCreateAssignmentModal();
+            
+            // Refresh the page to show new assignment
+            window.location.reload();
+        } catch (error) {
+            console.error('Error creating assignment:', error);
+            alert('Failed to create assignment: ' + error.message);
+        }
+    });
+
+    // Classroom settings form handler
+    document.getElementById('classroomSettingsForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const formData = new FormData(e.target);
+            const response = await fetch('/api/classrooms/{{classroom._id}}', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: formData.get('name'),
+                    description: formData.get('description'),
+                    active: formData.get('active') === 'true'
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to update classroom');
+            }
+
+            window.hideClassroomSettings();
+            window.location.reload();
+        } catch (error) {
+            console.error('Error updating classroom:', error);
+            alert('Failed to update classroom: ' + error.message);
+        }
+    });
+});</script>

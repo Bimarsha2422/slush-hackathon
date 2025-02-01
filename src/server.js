@@ -69,6 +69,22 @@ app.engine('hbs', engine({
         toString: function(value) {
             return value.toString();
         },
+        formatDate: function(date) {
+            if (!date) return '';
+            return new Date(date).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        },
+        initials: function(name) {
+            return name.split(' ')
+                .map(part => part[0])
+                .join('')
+                .toUpperCase();
+        },
         pageUrl: function(baseUrl, page, level) {
             const params = new URLSearchParams();
             params.set('page', page);

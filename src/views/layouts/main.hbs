@@ -70,30 +70,44 @@
                     {{!-- Auth Navigation --}}
                     <div class="flex items-center justify-end" id="authNav">
                         {{!-- User Controls (Hidden by default, shown when logged in) --}}
-                        <div class="hidden" id="userControls">
-                            <div class="flex items-center gap-4">
-                                {{!-- Dashboard Link --}}
-                                <a href="/teacher/dashboard" id="dashboardLink" 
-                                   class="hidden text-orange-500 hover:text-orange-400 transition-colors">
-                                    Dashboard
-                                </a>
-                                {{!-- User Info --}}
-                                <div class="text-right">
-                                    <div class="text-gray-900 text-lg" id="userName"></div>
-                                    <div class="text-orange-500 text-sm" id="userRole"></div>
-                                </div>
-                                {{!-- Logout Button --}}
-                                <button onclick="handleLogout()" 
-                                    class="p-2 text-gray-600 hover:text-gray-900 transition-colors"
-                                    title="Logout">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" 
-                                         stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round" 
-                                              d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
+                        <!-- User Controls (Shown when logged in) -->
+                        <!-- User Controls (Shown when logged in) -->
+<div class="hidden" id="userControls">
+  <div class="flex items-center justify-between gap-4">
+    <!-- User Info (left-aligned) -->
+    <div class="flex flex-col">
+      <div class="text-gray-900 text-lg" id="userName"></div>
+      <div class="text-orange-500 text-sm" id="userRole"></div>
+    </div>
+    <!-- Action Buttons (right-aligned) -->
+    <div class="flex items-center gap-10">
+      <!-- Dashboard Icon Link with Tooltip -->
+      <a href="/teacher/dashboard" id="dashboardLink" 
+         class="flex items-center p-2" 
+         title="Dashboard">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" 
+             viewBox="0 0 24 24" stroke="black" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" 
+                d="M3 10h4v11H3zM10 3h4v18h-4zM17 14h4v7h-4z" />
+        </svg>
+        <!-- Optional text label for larger screens -->
+        <span class="hidden sm:inline ml-1 text-black">Dashboard</span>
+      </a>
+      <!-- Logout Button with Tooltip -->
+      <button onclick="handleLogout()" 
+              class="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+              title="Logout">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" 
+             stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" 
+                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+
                         {{!-- Guest Controls (Shown by default, hidden when logged in) --}}
                         <div id="guestControls">
                             <a href="/auth" class="text-sm font-medium text-orange-500 hover:text-orange-400 transition-colors">
@@ -155,7 +169,7 @@
                 .then(data => {
                     const userName = document.getElementById('userName');
                     const userRole = document.getElementById('userRole');
-                    userName.textContent = data.name;
+                    userName.textContent = data.name.split(' ')[0];
                     userRole.textContent = data.role.charAt(0).toUpperCase() + data.role.slice(1);
                     
                     // Show dashboard link based on role
