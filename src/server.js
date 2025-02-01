@@ -13,6 +13,7 @@ import topicsRouter from './routes/topics.js';            // UI routes
 import problemsRouter from './routes/problems.js';        // UI routes
 import topicsApiRouter from './routes/api/topics.js';     // API routes
 import problemsApiRouter from './routes/api/problems.js'; // API routes
+import authRouter from './routes/auth.js';
 
 // ES modules require these to get __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -26,6 +27,7 @@ const client = new Groq({
 
 app.use(express.json()); 
 
+app.use('/api/auth', authRouter);
 app.use('/topics', topicsRouter);     // For rendering topic pages
 app.use('/problems', problemsRouter);  // For rendering problem pages
 
@@ -73,6 +75,14 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/topics', topicsRouter);
 app.use('/problems', problemsRouter);
+
+
+// Auth page route
+app.get('/auth', (req, res) => {
+    res.render('auth', {
+        title: 'Login or Register - Math Learning Platform'
+    });
+});
 
 app.get('/api/test', async (req, res) => {
   try {

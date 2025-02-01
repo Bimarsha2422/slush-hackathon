@@ -10,34 +10,7 @@
     
     {{!-- Inter Font --}}
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-
-
-<script type="module">
-  import * as fabric from 'https://cdn.jsdelivr.net/npm/fabric@6.5.4/+esm'
-  window.fabric = fabric;
-</script>
-
-<script>
-MathJax = {
-    loader: {
-        load: ['[tex]/ams', '[tex]/noerrors', '[tex]/noundefined']
-    },
-    tex: {
-        packages: {'[+]': ['ams', 'noerrors', 'noundefined']},
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']],
-        processEscapes: true,
-        processEnvironments: true
-    },
-    options: {
-        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
-    }
-};
-</script>
-<script type="text/javascript" id="MathJax-script" async
-    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-</script>
-
+    
     <style>
         @keyframes float {
             0%, 100% { transform: translateY(0); }
@@ -112,33 +85,63 @@ MathJax = {
     <nav class="bg-gray-800/50 backdrop-blur-md border-b border-gray-700 fixed w-full z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    {{!-- Animated Logo --}}
-                    <a href="/" class="flex items-center text-xl font-bold text-white hover:text-indigo-400 transition-colors group">
-                        <svg class="h-6 w-6 mr-2 animate-float" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                        </svg>
-                        <span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                            Math Learning
-                        </span>
-                    </a>
+                <div class="flex items-center justify-between w-full">
+                    <div class="flex items-center">
+                        {{!-- Animated Logo --}}
+                        <a href="/" class="flex items-center text-xl font-bold text-white hover:text-indigo-400 transition-colors group">
+                            <svg class="h-6 w-6 mr-2 animate-float" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                            </svg>
+                            <span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                                Math Learning
+                            </span>
+                        </a>
 
-                    {{!-- Conditional Return Home --}}
-                    {{#unless isHome}}
-                    <a href="/" class="ml-8 text-sm font-medium text-gray-300 hover:text-white transition-colors fade-in">
-                        ← Return Home
-                    </a>
-                    {{/unless}}
+                        {{!-- Conditional Return Home --}}
+                        {{#unless isHome}}
+                        <a href="/" class="ml-8 text-sm font-medium text-gray-300 hover:text-white transition-colors fade-in">
+                            ← Return Home
+                        </a>
+                        {{/unless}}
+                    </div>
+
+                    {{!-- Auth Navigation --}}
+                    <div class="flex items-center justify-end" id="authNav">
+                        <div class="hidden" id="userControls">
+                            <div class="flex items-center gap-4">
+                                <div class="text-right">
+                                    <div class="text-white text-lg" id="userName"></div>
+                                    <div class="text-indigo-400 text-sm" id="userRole"></div>
+                                </div>
+                                <button onclick="handleLogout()" 
+                                    class="p-2 text-gray-300 hover:text-white transition-colors"
+                                    title="Logout">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="guestControls">
+                            <a href="/auth" class="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
+                                Login / Register
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </nav>
 
     {{!-- Main Content with Entrance Animation --}}
-    <main class="fade-in pt-24" style="animation-delay: 0.3s">
-        {{{body}}}
-    </main>
+    <div class="min-h-screen">
+        <div class="pt-24">
+            <main class="fade-in mx-auto" style="animation-delay: 0.3s">
+                {{{body}}}
+            </main>
+        </div>
+    </div>
 
     {{!-- Animated Footer --}}
     <footer class="bg-gray-800/50 backdrop-blur-lg border-t border-gray-700 mt-24">
@@ -171,7 +174,81 @@ MathJax = {
             const animateElements = document.querySelectorAll('.fade-in');
             animateElements.forEach(el => el.style.opacity = '1');
         });
-        
+    </script>
+
+    {{!-- Authentication Management --}}
+    <script>
+        // Check authentication status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAuthUI();
+        });
+
+        function updateAuthUI() {
+            const token = localStorage.getItem('authToken');
+            const userControls = document.getElementById('userControls');
+            const guestControls = document.getElementById('guestControls');
+
+            if (token) {
+                // User is logged in
+                userControls.classList.remove('hidden');
+                guestControls.classList.add('hidden');
+                
+                // Fetch user info
+                fetch('/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const userName = document.getElementById('userName');
+                    const userRole = document.getElementById('userRole');
+                    userName.textContent = data.name;
+                    userRole.textContent = data.role.charAt(0).toUpperCase() + data.role.slice(1);
+                })
+                .catch(() => handleLogout());
+            } else {
+                // User is not logged in
+                userControls.classList.add('hidden');
+                guestControls.classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            const token = localStorage.getItem('authToken');
+            
+            // Call logout endpoint
+            fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .finally(() => {
+                // Clear local storage
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userRole');
+                
+                // Update UI
+                updateAuthUI();
+                
+                // Redirect to home page
+                window.location.href = '/';
+            });
+        }
+
+        // Add auth token to all fetch requests
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            const token = localStorage.getItem('authToken');
+            if (token && !url.includes('/api/auth/login') && !url.includes('/api/auth/register')) {
+                options.headers = {
+                    ...options.headers,
+                    'Authorization': `Bearer ${token}`
+                };
+            }
+            return originalFetch(url, options);
+        };
     </script>
 </body>
 </html>
