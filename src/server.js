@@ -322,7 +322,7 @@ app.post('/api/help', async (req, res) => {
                 { role: "system", content: systemMessages[helpType] },
                 { role: "user", content: userMessage }
             ],
-            model: "llama3-70b-8192",
+            model: "llama-3.3-70b-versatile",
             temperature: 0.3
         });
 
