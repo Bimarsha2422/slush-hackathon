@@ -589,6 +589,7 @@ function setTool(tool) {
     const currentResponse = document.getElementById('currentResponse');
     const activeMode = document.querySelector('.input-mode-btn.active').dataset.mode;
     let work = '';
+    let isCanvasMode = false;
 
     switch (activeMode) {
       case 'text':
@@ -598,9 +599,12 @@ function setTool(tool) {
         work = document.getElementById('latexInput').value;
         break;
       case 'canvas':
-        if (canvas) {
-          work = '[Drawing submitted]';
+        if (!canvas) {
+            throw new Error('Canvas not initialized');
         }
+        // Convert canvas to image when in canvas mode
+        work = canvas.toDataURL('image/png');
+        isCanvasMode = true;
         break;
     }
 
@@ -624,6 +628,7 @@ function setTool(tool) {
           problem: {{{json problem}}},
           work: work,
           query: helpQuery.value,
+          isCanvasMode,
           hintHistory: helpType === 'hint' 
             ? responseHistory.filter(r => r.type === 'hint').map(r => ({ content: r.content }))
             : []
