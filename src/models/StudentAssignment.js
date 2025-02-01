@@ -109,7 +109,7 @@ studentAssignmentSchema.methods.markQuestionComplete = async function(questionId
             improvements: aiAnalysis.improvements || [],
             hintsUsed: submission.hints.length,
             submissionTime: new Date(),
-            aiAnalysis: aiAnalysis.feedback
+            aiAnalysis: aiAnalysis.aiAnalysis
         };
         
         // Check if all questions are complete

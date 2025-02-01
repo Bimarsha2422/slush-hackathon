@@ -5,6 +5,7 @@ import Classroom from '../models/Classroom.js';
 import Assignment from '../models/Assignment.js';
 import StudentAssignment from '../models/StudentAssignment.js';
 import User from '../models/User.js';
+import { groqService } from '../services/groq.js';
 
 const router = express.Router();
 
@@ -170,69 +171,6 @@ router.get('/assignment/:id', authPage(['student']), async (req, res) => {
 });
 
 
-// View specific assignment question
-// router.get('/assignment/:assignmentId/question/:questionId', authPage(['student']), async (req, res) => {
-//     try {
-//         const assignment = await Assignment.findById(req.params.assignmentId)
-//             .populate('classroomId');
-
-//         if (!assignment) {
-//             return res.status(404).render('error', {
-//                 message: 'Assignment not found'
-//             });
-//         }
-
-//         // Find the specific question
-//         const question = assignment.questions.find(q => 
-//             q._id.toString() === req.params.questionId
-//         );
-
-//         if (!question) {
-//             return res.status(404).render('error', {
-//                 message: 'Question not found'
-//             });
-//         }
-
-//         // Get student's progress for this question
-//         const studentAssignment = await StudentAssignment.findOne({
-//             studentId: req.user._id,
-//             assignmentId: assignment._id
-//         });
-
-//         const submission = studentAssignment?.submissions?.find(s => 
-//             s.questionId.toString() === question._id.toString()
-//         );
-
-//         // Format question for the problem interface
-//         const problemData = {
-//             problem: question.question,
-//             solution: question.solution,
-//             type: question.type || 'math',
-//             level: 'Assignment Question',
-//             topic: assignment.classroomId.name
-//         };
-
-//         res.render('problem', {
-//             title: `${assignment.title} - Question ${assignment.questions.indexOf(question) + 1}`,
-//             problem: problemData,
-//             assignmentContext: {
-//                 assignmentId: assignment._id,
-//                 questionId: question._id,
-//                 classroomId: assignment.classroomId._id,
-//                 questionNumber: assignment.questions.indexOf(question) + 1,
-//                 totalQuestions: assignment.questions.length,
-//                 previousWork: submission?.work,
-//                 isComplete: submission?.isComplete || false
-//             },
-//             isAssignmentQuestion: true
-//         });
-//     } catch (error) {
-//         console.error('Error loading assignment question:', error);
-//         res.status(500).render('error', {
-//             message: 'Error loading question'
-//         });
-//     }
-// });
 router.get('/assignment/:assignmentId/question/:questionId', authPage(['student']), async (req, res) => {
     try {
         const assignment = await Assignment.findById(req.params.assignmentId)
@@ -257,7 +195,7 @@ router.get('/assignment/:assignmentId/question/:questionId', authPage(['student'
             assignmentId: assignment._id
         });
 
-        // Find saved work for this question
+        // Find submission and feedback for this question
         const submission = studentAssignment?.submissions?.find(s => 
             s.questionId.toString() === question._id.toString()
         );
@@ -273,15 +211,16 @@ router.get('/assignment/:assignmentId/question/:questionId', authPage(['student'
         res.render('problem', {
             title: `${assignment.title} - Question ${assignment.questions.indexOf(question) + 1}`,
             problem: problemData,
-            savedWork: submission?.work || '',         // Pass saved work
-            workMode: submission?.mode || 'text',      // Pass saved mode
+            savedWork: submission?.work || '',
+            workMode: submission?.mode || 'text',
+            feedback: submission?.feedback || null, // Pass feedback to template
             assignmentContext: {
                 assignmentId: assignment._id,
                 questionId: question._id,
                 classroomId: assignment.classroomId._id,
                 questionNumber: assignment.questions.indexOf(question) + 1,
                 totalQuestions: assignment.questions.length,
-                status: submission?.status || 'not_started'
+                status: submission?.isComplete ? 'completed' : (submission ? 'in_progress' : 'not_started')
             },
             isAssignmentQuestion: true
         });
@@ -406,62 +345,13 @@ router.post('/join-classroom', authPage(['student']), async (req, res) => {
     }
 });
 
-// Updated join classroom route
-// router.post('/join-classroom', authPage(['student']), async (req, res) => {
-//     try {
-//         console.log('Join classroom request body:', req.body);  // Debug log
-        
-//         const { code } = req.body;
-        
-//         if (!code) {
-//             console.log('No code provided in request');  // Debug log
-//             return res.status(400).render('error', {
-//                 message: 'Please provide a class code'
-//             });
-//         }
 
-//         console.log('Looking for classroom with code:', code.toUpperCase());  // Debug log
-        
-//         const classroom = await Classroom.findOne({ 
-//             code: code.toUpperCase(),
-//             active: true 
-//         });
-
-//         if (!classroom) {
-//             console.log('No classroom found with code:', code);  // Debug log
-//             return res.status(404).render('error', {
-//                 message: 'Invalid classroom code'
-//             });
-//         }
-
-//         console.log('Found classroom:', classroom._id);  // Debug log
-
-//         // Check if already enrolled
-//         if (classroom.students.includes(req.user._id)) {
-//             console.log('Student already enrolled');  // Debug log
-//             return res.status(400).render('error', {
-//                 message: 'You are already enrolled in this classroom'
-//             });
-//         }
-
-//         // Add student to classroom
-//         await classroom.addStudent(req.user._id);
-//         console.log('Successfully added student to classroom');  // Debug log
-
-//         res.redirect('/student/dashboard');
-//     } catch (error) {
-//         console.error('Error joining classroom:', error);
-//         res.status(500).render('error', {
-//             message: 'Error joining classroom'
-//         });
-//     }
-// });
 router.post('/assignment/:assignmentId/question/:questionId/complete', authPage(['student']), async (req, res) => {
     try {
         const { assignmentId, questionId } = req.params;
         const { work, mode } = req.body;
 
-        // Get student's assignment progress
+        // Find student's assignment
         let studentAssignment = await StudentAssignment.findOne({
             studentId: req.user._id,
             assignmentId
@@ -471,7 +361,7 @@ router.post('/assignment/:assignmentId/question/:questionId/complete', authPage(
             return res.status(404).json({ error: 'Assignment progress not found' });
         }
 
-        // Get the submission history including hints
+        // Get the submission including hints
         const submission = studentAssignment.submissions.find(s => 
             s.questionId.toString() === questionId
         );
@@ -480,20 +370,37 @@ router.post('/assignment/:assignmentId/question/:questionId/complete', authPage(
             return res.status(404).json({ error: 'No work found for this question' });
         }
 
-        // Generate AI analysis
-        const aiAnalysis = await generateAIAnalysis(work, submission.hints);
+        // Use groqService to analyze work
+        const aiAnalysis = await groqService.analyzeStudentWork(
+            work,
+            submission.hints || [],
+            mode
+        );
 
-        // Mark as complete with feedback
-        const feedback = await studentAssignment.markQuestionComplete(questionId, aiAnalysis);
+        // Use markQuestionComplete method from StudentAssignment model
+        await studentAssignment.markQuestionComplete(questionId, {
+            strengths: aiAnalysis.strengths,
+            improvements: aiAnalysis.improvements,
+            aiAnalysis: aiAnalysis.analysis,
+            hintsUsed: submission.hints.length,
+            submissionTime: new Date()
+        });
+
+        const updatedAssignment = await StudentAssignment.findById(studentAssignment._id);
+        const isComplete = updatedAssignment.status === 'completed';
 
         res.json({ 
             status: 'success',
-            feedback,
-            isAssignmentComplete: studentAssignment.status === 'completed'
+            feedback: aiAnalysis,
+            isAssignmentComplete: isComplete
         });
+
     } catch (error) {
         console.error('Error completing question:', error);
-        res.status(500).json({ error: 'Failed to complete question' });
+        res.status(500).json({ 
+            error: 'Failed to complete question',
+            details: error.message 
+        });
     }
 });
 

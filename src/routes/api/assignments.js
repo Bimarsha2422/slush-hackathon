@@ -9,6 +9,79 @@ const router = express.Router();
 
 // Rest of the code remains the same...
 // Create a new assignment (Teacher only)
+
+router.get('/:id/questions/:questionId/report', auth, requireRole(['teacher']), async (req, res) => {
+    try {
+        const { id: assignmentId, questionId } = req.params;
+
+        // Get assignment and verify teacher ownership
+        const assignment = await Assignment.findById(assignmentId)
+            .populate({
+                path: 'classroomId',
+                select: 'teacherId name'
+            });
+
+        if (!assignment) {
+            return res.status(404).json({ error: 'Assignment not found' });
+        }
+
+        if (!assignment.classroomId.teacherId.equals(req.user._id)) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Get all student submissions for this question
+        const studentAssignments = await StudentAssignment.find({
+            assignmentId,
+            'submissions.questionId': questionId
+        }).populate('studentId', 'name');
+
+        // Process submissions for analysis
+        const submissions = studentAssignments.map(sa => {
+            const submission = sa.submissions.find(s => 
+                s.questionId.toString() === questionId
+            );
+            return submission ? {
+                studentId: sa.studentId.name,
+                work: submission.work,
+                hints: submission.hints || [],
+                isComplete: submission.isComplete,
+                mode: submission.mode,
+                feedback: submission.feedback
+            } : null;
+        }).filter(Boolean);
+
+        // Get class report from groqService
+        const report = await groqService.generateClassReport(
+            assignmentId,
+            questionId,
+            submissions
+        );
+
+        // Calculate statistics
+        const stats = {
+            totalStudents: studentAssignments.length,
+            submittedCount: submissions.length,
+            completedCount: submissions.filter(s => s.isComplete).length,
+            averageHints: Number((submissions.reduce((acc, s) => acc + s.hints.length, 0) / submissions.length || 0).toFixed(2)),
+        };
+
+        res.json({
+            assignmentName: assignment.title,
+            questionNumber: assignment.questions.findIndex(q => q._id.toString() === questionId) + 1,
+            stats,
+            report,
+            lastUpdated: new Date()
+        });
+
+    } catch (error) {
+        console.error('Error generating assignment report:', error);
+        res.status(500).json({ 
+            error: 'Failed to generate report',
+            details: error.message 
+        });
+    }
+});
+
 router.post('/', auth, requireRole(['teacher']), async (req, res) => {
     try {
         const { classroomId, title, description, dueDate, questions } = req.body;

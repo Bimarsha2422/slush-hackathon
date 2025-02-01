@@ -150,6 +150,52 @@
     </div>
 </div>
 
+{{#if feedback}}
+    <div id="feedbackSection" class="mt-8 border border-orange-200 rounded-lg overflow-hidden">
+        <button onclick="toggleFeedback()" class="w-full flex items-center justify-between p-4 bg-orange-50 hover:bg-orange-100">
+            <span class="text-lg font-medium text-gray-900">AI Feedback on Your Solution</span>
+            <svg id="feedbackArrow" class="w-6 h-6 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+        </button>
+        <div id="feedbackContent" class="hidden bg-white p-6">
+            <div class="space-y-6">
+                <div>
+                    <h4 class="text-sm font-medium text-green-600 mb-2">Strengths</h4>
+                    <ul class="list-disc pl-5 space-y-1">
+                        {{#each feedback.strengths}}
+                        <li class="text-sm text-gray-600">{{this}}</li>
+                        {{/each}}
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-orange-600 mb-2">Areas for Improvement</h4>
+                    <ul class="list-disc pl-5 space-y-1">
+                        {{#each feedback.improvements}}
+                        <li class="text-sm text-gray-600">{{this}}</li>
+                        {{/each}}
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Overall Analysis</h4>
+                    <p class="text-sm text-gray-600">{{feedback.aiAnalysis}}</p>
+                </div>
+
+                <div class="pt-4 mt-4 border-t border-gray-200">
+                    <div class="text-sm text-gray-500">
+                        Submitted: {{formatDate feedback.submissionTime}}
+                        {{#if feedback.hintsUsed}}
+                        • Used {{feedback.hintsUsed}} hint{{#if (not (eq feedback.hintsUsed 1))}}s{{/if}}
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/if}}
+
       <!-- Help Section -->
       <div class="help-section">
         <div class="section-header">Need Help?</div>
@@ -902,36 +948,50 @@ async function markComplete() {
 }
 
 function showAIFeedback(feedback) {
-    // Create feedback modal or section
-    const feedbackHTML = `
-        <div class="bg-white p-6 rounded-lg shadow-lg">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Feedback on Your Solution</h3>
-            
-            <div class="mb-4">
-                <h4 class="text-sm font-medium text-green-600 mb-2">Strengths</h4>
-                <ul class="list-disc pl-5 space-y-1">
-                    ${feedback.strengths.map(s => `<li class="text-sm text-gray-600">${s}</li>`).join('')}
-                </ul>
-            </div>
-            
-            <div class="mb-4">
-                <h4 class="text-sm font-medium text-orange-600 mb-2">Areas for Improvement</h4>
-                <ul class="list-disc pl-5 space-y-1">
-                    ${feedback.improvements.map(i => `<li class="text-sm text-gray-600">${i}</li>`).join('')}
-                </ul>
-            </div>
-            
-            <div>
-                <h4 class="text-sm font-medium text-gray-900 mb-2">Overall Analysis</h4>
-                <p class="text-sm text-gray-600">${feedback.aiAnalysis}</p>
+    const feedbackSection = document.getElementById('feedbackSection');
+    if (feedbackSection) {
+        // If section exists, update its content
+        feedbackSection.remove();
+    }
+    
+    // Create new feedback section
+    const newFeedbackSection = document.createElement('div');
+    newFeedbackSection.id = 'feedbackSection';
+    newFeedbackSection.className = 'mt-8 border border-orange-200 rounded-lg overflow-hidden feedback-animation';
+    newFeedbackSection.innerHTML = `
+        <button onclick="toggleFeedback()" class="w-full flex items-center justify-between p-4 bg-orange-50 hover:bg-orange-100">
+            <span class="text-lg font-medium text-gray-900">AI Feedback on Your Solution</span>
+            <svg id="feedbackArrow" class="w-6 h-6 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+        </button>
+        <div id="feedbackContent" class="bg-white p-6">
+            <div class="space-y-6">
+                <div>
+                    <h4 class="text-sm font-medium text-green-600 mb-2">Strengths</h4>
+                    <ul class="list-disc pl-5 space-y-1">
+                        ${feedback.strengths.map(s => `<li class="text-sm text-gray-600">${s}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-orange-600 mb-2">Areas for Improvement</h4>
+                    <ul class="list-disc pl-5 space-y-1">
+                        ${feedback.improvements.map(i => `<li class="text-sm text-gray-600">${i}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Overall Analysis</h4>
+                    <p class="text-sm text-gray-600">${feedback.aiAnalysis}</p>
+                </div>
             </div>
         </div>
     `;
 
-    // Show in a modal or designated area
-    const feedbackArea = document.getElementById('aiFeedback') || createFeedbackArea();
-    feedbackArea.innerHTML = feedbackHTML;
-    feedbackArea.classList.remove('hidden');
+    // Insert the feedback section after the save status div
+    const saveStatus = document.getElementById('saveStatus');
+    saveStatus.parentNode.insertBefore(newFeedbackSection, saveStatus.nextSibling);
 }
 
 function updateStatusIndicator(status) {
@@ -958,12 +1018,12 @@ function updateStatusIndicator(status) {
     }
 }
 
-function createFeedbackArea() {
-    const feedbackDiv = document.createElement('div');
-    feedbackDiv.id = 'aiFeedback';
-    feedbackDiv.classList.add('mt-8', 'hidden');
-    document.querySelector('.work-section').appendChild(feedbackDiv);
-    return feedbackDiv;
+function toggleFeedback() {
+    const content = document.getElementById('feedbackContent');
+    const arrow = document.getElementById('feedbackArrow');
+    
+    content.classList.toggle('hidden');
+    arrow.classList.toggle('rotate-180');
 }
 
 function showAssignmentComplete() {
@@ -975,15 +1035,11 @@ function showAssignmentComplete() {
             <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
-            Assignment Complete! Redirecting to assignment overview...
+            Assignment Complete! 
         </div>
     `;
     document.body.appendChild(message);
-    
-    // Redirect after 2 seconds
-    setTimeout(() => {
-        window.location.href = `/student/assignment/${assignmentContext.assignmentId}`;
-    }, 2000);
+  
 }
 
 document.addEventListener('DOMContentLoaded', function() {
