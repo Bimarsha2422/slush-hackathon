@@ -1,7 +1,14 @@
 <div class="problem-container">
   <div class="problem-header">
+    
+    {{#if isAssignmentQuestion}}
+    <a href="/student/assignment/{{assignmentContext.assignmentId}}" class="text-orange-500 hover:text-orange-400">
+        ← Back to Assignment
+    </a>
+{{else}}
     <h2>{{problem.type}} - Level {{problem.level}}</h2>
     <a href="/topics/{{topicName}}" class="back-link">← Back to {{topicName}}</a>
+{{/if}}
   </div>
 
   <div class="problem-content">

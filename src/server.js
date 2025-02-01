@@ -19,6 +19,7 @@ import classroomApiRouter from './routes/api/classroom.js';
 import assignmentsApiRouter from './routes/api/assignments.js';
 import progressApiRouter from './routes/api/progress.js';
 import teacherRouter from './routes/teacher.js';
+import studentRouter from './routes/student.js';
 
 // ES modules require these to get __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -31,6 +32,7 @@ const client = new Groq({
 });
 
 app.use(express.json()); 
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use('/api/auth', authRouter);
@@ -46,6 +48,9 @@ app.use('/api/classrooms', classroomApiRouter);
 app.use('/api/assignments', assignmentsApiRouter);
 app.use('/api/progress', progressApiRouter);
 app.use('/teacher', teacherRouter);
+app.use('/student', studentRouter);
+
+
 
 // In src/server.js, update the Handlebars configuration
 app.engine('hbs', engine({

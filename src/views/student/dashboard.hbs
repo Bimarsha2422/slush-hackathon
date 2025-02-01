@@ -1,0 +1,151 @@
+{{!-- src/views/student/dashboard.hbs --}}
+<div class="min-h-screen bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {{!-- Student Stats Overview --}}
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-gray-900">Student Dashboard</h1>
+            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4">
+                {{!-- Stats cards --}}
+                <div class="bg-orange-50/50 backdrop-blur-md border border-orange-200 rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-gray-900">Enrolled Classes</h3>
+                    <p class="mt-2 text-3xl font-bold text-orange-500">{{stats.classCount}}</p>
+                </div>
+                <div class="bg-orange-50/50 backdrop-blur-md border border-orange-200 rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-gray-900">Total Assignments</h3>
+                    <p class="mt-2 text-3xl font-bold text-orange-500">{{stats.totalAssignments}}</p>
+                </div>
+                <div class="bg-orange-50/50 backdrop-blur-md border border-orange-200 rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-gray-900">Completed</h3>
+                    <p class="mt-2 text-3xl font-bold text-orange-500">{{stats.completedAssignments}}</p>
+                </div>
+                <div class="bg-orange-50/50 backdrop-blur-md border border-orange-200 rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-gray-900">Pending</h3>
+                    <p class="mt-2 text-3xl font-bold text-orange-500">{{stats.pendingAssignments}}</p>
+                </div>
+            </div>
+        </div>
+
+        {{!-- Main Content Grid --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {{!-- Enrolled Classes --}}
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900">Your Classes</h2>
+                    <button onclick="window.showJoinClassModal()" 
+                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm 
+                                   text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
+                        <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Join Class
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    {{#each classrooms}}
+                    <a href="/student/classroom/{{this._id}}" 
+                       class="block p-6 bg-orange-50/50 backdrop-blur-md border border-orange-200 
+                              rounded-lg hover:bg-orange-100/50 transition-colors">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900">{{this.name}}</h3>
+                                <p class="mt-1 text-sm text-gray-600">Teacher: {{this.teacherName}}</p>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                       bg-orange-100 text-orange-800">
+                                {{this.assignmentCount}} assignments
+                            </span>
+                        </div>
+                    </a>
+                    {{/each}}
+                </div>
+            </div>
+
+            {{!-- Recent Activity --}}
+            <div>
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
+                <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                    <ul class="divide-y divide-gray-200">
+                        {{#each recentActivity}}
+                        <li class="p-4">
+                            <div class="flex items-center space-x-4">
+                                <div class="flex-shrink-0">
+                                    <span class="p-2 bg-blue-100 text-blue-600 rounded-full">
+                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-medium text-gray-900">{{this.message}}</p>
+                                    <p class="text-sm text-gray-500">{{formatDate this.timestamp}}</p>
+                                </div>
+                            </div>
+                        </li>
+                        {{/each}}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{!-- Join Class Modal --}}
+<div id="joinClassModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden">
+    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <div class="absolute right-0 top-0 pr-4 pt-4">
+                <button type="button" onclick="window.hideJoinClassModal()" 
+                        class="rounded-md bg-white text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="sm:flex sm:items-start">
+                <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                    <h3 class="text-lg font-semibold leading-6 text-gray-900">Join a Class</h3>
+                    <div class="mt-4">
+                        <form id="joinClassForm" action="/student/join-classroom" method="POST" class="space-y-4">
+                            <div>
+                                <label for="classCode" class="block text-sm font-medium text-gray-700">Class Code</label>
+                                <input type="text" name="code" id="classCode" required
+                                       class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 
+                                              focus:border-orange-500 focus:ring-orange-500"
+                                       placeholder="Enter class code">
+                            </div>
+
+                            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                                <button type="submit"
+                                        class="inline-flex w-full justify-center rounded-md bg-orange-600 px-3 py-2 
+                                               text-sm font-semibold text-white shadow-sm hover:bg-orange-500 sm:ml-3 sm:w-auto">
+                                    Join Class
+                                </button>
+                                <button type="button" onclick="window.hideJoinClassModal()"
+                                        class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 
+                                               text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 
+                                               hover:bg-gray-50 sm:mt-0 sm:w-auto">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Modal management
+window.showJoinClassModal = function() {
+    document.getElementById('joinClassModal').classList.remove('hidden');
+};
+
+window.hideJoinClassModal = function() {
+    document.getElementById('joinClassModal').classList.add('hidden');
+    document.getElementById('joinClassForm').reset();
+};
+</script>

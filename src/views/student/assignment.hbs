@@ -1,0 +1,116 @@
+{{!-- src/views/student/assignment.hbs --}}
+<div class="min-h-screen bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {{!-- Header --}}
+        <div class="border-b border-gray-200 pb-8 mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <a href="/student/classroom/{{assignment.classroomId._id}}" class="text-orange-500 hover:text-orange-600">
+                        ← Back to {{classroom.name}}
+                    </a>
+                    <h1 class="mt-2 text-2xl font-bold text-gray-900">{{assignment.title}}</h1>
+                    <p class="mt-2 text-gray-600">{{assignment.description}}</p>
+                </div>
+                <div class="text-right">
+                    {{#if dueDate}}
+                    <p class="text-sm text-gray-500">Due: {{formatDate dueDate}}</p>
+                    {{/if}}
+                    <span class="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                        {{#if (eq overallStatus 'completed')}}
+                            bg-green-100 text-green-800
+                        {{else if (eq overallStatus 'in_progress')}}
+                            bg-blue-100 text-blue-800
+                        {{else}}
+                            bg-gray-100 text-gray-800
+                        {{/if}}">
+                        {{overallStatus}}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {{!-- Questions List --}}
+        <div class="space-y-8">
+            <div class="grid grid-cols-12 gap-6">
+                {{!-- Questions Navigation Sidebar --}}
+                <div class="col-span-3">
+                    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <div class="p-4 bg-gray-50 border-b border-gray-200">
+                            <h3 class="text-sm font-medium text-gray-900">Questions</h3>
+                        </div>
+                        <nav class="flex flex-col">
+                            {{#each assignment.questions}}
+                            <a href="/student/assignment/{{../assignment._id}}/question/{{this._id}}" 
+                               class="flex items-center justify-between p-4 hover:bg-gray-50 border-b border-gray-200 last:border-b-0
+                                      {{#if (eq ../currentQuestion._id this._id)}}bg-orange-50{{/if}}">
+                                <div class="flex items-center">
+                                    <span class="flex items-center justify-center h-6 w-6 rounded-full 
+                                        {{#if (eq this.status 'completed')}}
+                                            bg-green-100 text-green-800
+                                        {{else if (eq this.status 'in_progress')}}
+                                            bg-blue-100 text-blue-800
+                                        {{else}}
+                                            bg-gray-100 text-gray-600
+                                        {{/if}}
+                                        text-sm font-medium">
+                                        {{this.number}}
+                                    </span>
+                                    <span class="ml-3 text-sm font-medium text-gray-900">Question {{this.number}}</span>
+                                </div>
+                                {{#if (eq this.status 'completed')}}
+                                <svg class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                {{/if}}
+                            </a>
+                            {{/each}}
+                        </nav>
+                    </div>
+                </div>
+
+                {{!-- Question Preview Cards --}}
+                <div class="col-span-9 space-y-6">
+                    {{#each assignment.questions}}
+                    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-medium text-gray-900">Question {{this.number}}</h3>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {{#if (eq this.status 'completed')}}
+                                        bg-green-100 text-green-800
+                                    {{else if (eq this.status 'in_progress')}}
+                                        bg-blue-100 text-blue-800
+                                    {{else}}
+                                        bg-gray-100 text-gray-800
+                                    {{/if}}">
+                                    {{this.status}}
+                                </span>
+                            </div>
+
+                            <div class="prose max-w-none text-gray-500">
+                                {{{this.question}}}
+                            </div>
+
+                            <div class="mt-4">
+                                <a href="/student/assignment/{{../assignment._id}}/question/{{this._id}}" 
+                                   class="inline-flex items-center text-sm font-medium text-orange-600 hover:text-orange-500">
+                                    {{#if (eq this.status 'completed')}}
+                                        View Solution
+                                    {{else if (eq this.status 'in_progress')}}
+                                        Continue Solving
+                                    {{else}}
+                                        Start Solving
+                                    {{/if}}
+                                    <svg class="ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

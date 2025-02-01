@@ -58,6 +58,7 @@ classroomSchema.methods.generateNewCode = async function() {
 
 // Method to add a student
 classroomSchema.methods.addStudent = async function(studentId) {
+    // Check if student is already in the classroom
     if (!this.students.includes(studentId)) {
         this.students.push(studentId);
         await this.save();
