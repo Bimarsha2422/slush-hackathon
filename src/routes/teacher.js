@@ -4,6 +4,7 @@ import { auth, requireRole, authPage } from '../middleware/auth.js';
 import Classroom from '../models/Classroom.js';
 import Assignment from '../models/Assignment.js';
 import StudentAssignment from '../models/StudentAssignment.js';
+import { groqService } from '../services/groq.js';
 
 const router = express.Router();
 
@@ -17,8 +18,6 @@ router.get('/dashboard', authPage(['teacher']), async (req, res) => {
             teacherId: req.user._id,
             active: true 
         });
-
-        console.log('Found classrooms:', classrooms);
 
         // Calculate total students
         let totalStudents = 0;
@@ -46,7 +45,6 @@ router.get('/dashboard', authPage(['teacher']), async (req, res) => {
             timestamp: assignment.createdAt
         }));
 
-        // Render the dashboard with all data
         res.render('teacher/dashboard', {
             title: 'Teacher Dashboard',
             stats: {
@@ -55,7 +53,7 @@ router.get('/dashboard', authPage(['teacher']), async (req, res) => {
                 assignmentCount: assignments.length
             },
             classrooms: classrooms.map(c => ({
-                _id: c._id,
+                _id: c._id.toString(),
                 name: c.name
             })),
             recentActivity
@@ -99,30 +97,35 @@ router.get('/assignments/:id', authPage(['teacher']), async (req, res) => {
                 const submission = sa.submissions.find(s => 
                     s.questionId.equals(question._id)
                 );
-                return submission ? {
+                
+                if (!submission) return null;
+                
+                return {
                     studentId: sa.studentId._id,
                     studentName: sa.studentId.name,
-                    status: submission.isComplete ? 'completed' : 
+                    status: submission.isComplete ? 'completed' :
                             submission.work ? 'in_progress' : 'not_started',
                     mode: submission.mode,
                     hintsUsed: submission.hints?.length || 0,
                     submissionTime: submission.submittedAt,
-                    questionId: question._id // Add this line to explicitly pass question ID
-                } : null;
+                    questionId: question._id.toString(),
+                    assignmentId: assignment._id.toString()
+                };
             }).filter(Boolean);
-        
+
             return {
                 ...question.toObject(),
-                questionId: question._id,  // Ensure questionId is available at this level
-                _id: question._id,
+                questionId: question._id.toString(),
+                _id: question._id.toString(),
                 questionNumber: assignment.questions.indexOf(question) + 1,
                 submissions: questionSubmissions,
+                assignmentId: assignment._id.toString(),
                 stats: {
                     totalSubmissions: questionSubmissions.length,
                     completed: questionSubmissions.filter(s => s.status === 'completed').length,
                     inProgress: questionSubmissions.filter(s => s.status === 'in_progress').length,
-                    averageHints: (questionSubmissions.reduce((acc, s) => acc + s.hintsUsed, 0) / 
-                                 questionSubmissions.length || 0).toFixed(1)
+                    averageHints: (questionSubmissions.reduce((acc, s) => acc + s.hintsUsed, 0) /
+                                questionSubmissions.length || 0).toFixed(1)
                 }
             };
         });
@@ -132,11 +135,12 @@ router.get('/assignments/:id', authPage(['teacher']), async (req, res) => {
             title: `${assignment.title} - Details`,
             assignment: {
                 ...assignment.toObject(),
+                _id: assignment._id.toString(),
                 questions: questionsWithStats
             },
             classroom: assignment.classroomId,
-            studentCount: assignment.classroomId.students.length, 
-            classroomId: assignment.classroomId._id, 
+            studentCount: assignment.classroomId.students.length,
+            classroomId: assignment.classroomId._id.toString()
         };
 
         res.render('teacher/assignment-details', viewData);
@@ -148,28 +152,26 @@ router.get('/assignments/:id', authPage(['teacher']), async (req, res) => {
     }
 });
 
-
 // View individual student submission
 router.get('/assignments/:assignmentId/questions/:questionId/submissions/:studentId', authPage(['teacher']), async (req, res) => {
     try {
         const { assignmentId, questionId, studentId } = req.params;
-        console.log('Params:', { assignmentId, questionId, studentId }); // Debug log
+        console.log('Loading submission:', { assignmentId, questionId, studentId });
 
         // Get assignment with classroom info
-        const assignment = await Assignment.findById(assignmentId);
+        const assignment = await Assignment.findById(assignmentId)
+            .populate('classroomId');
+
         if (!assignment) {
-            console.log('Assignment not found:', assignmentId);
             return res.status(404).render('error', { message: 'Assignment not found' });
         }
-        console.log('Found assignment:', assignment._id); // Debug log
 
-        await assignment.populate('classroomId');
-
+        // Verify teacher ownership
         if (!assignment.classroomId.teacherId.equals(req.user._id)) {
             return res.status(403).render('error', { message: 'Access denied' });
         }
 
-        // Get student info and submission with populated student data
+        // Get student submission
         const studentAssignment = await StudentAssignment.findOne({
             assignmentId,
             studentId
@@ -184,7 +186,7 @@ router.get('/assignments/:assignmentId/questions/:questionId/submissions/:studen
             return res.status(404).render('error', { message: 'Question not found' });
         }
 
-        const submission = studentAssignment.submissions.find(s => 
+        const submission = studentAssignment.submissions.find(s =>
             s.questionId.toString() === questionId
         );
 
@@ -192,18 +194,15 @@ router.get('/assignments/:assignmentId/questions/:questionId/submissions/:studen
             return res.status(404).render('error', { message: 'No work found for this question' });
         }
 
-        // For canvas submissions, ensure proper image data format
+        // Format canvas submissions
         if (submission.mode === 'canvas' && !submission.work.startsWith('data:image')) {
             submission.work = `data:image/png;base64,${submission.work}`;
         }
 
-        console.log('Rendering with assignment ID:', assignment._id); // Debug log
-
-        // Render with complete data
         res.render('teacher/student-submission', {
             title: `${studentAssignment.studentId.name}'s Work - ${assignment.title}`,
             assignment: {
-                _id: assignment._id.toString(),  // Explicitly include ID as string
+                _id: assignment._id.toString(),
                 title: assignment.title
             },
             student: studentAssignment.studentId,
@@ -224,7 +223,7 @@ router.get('/assignments/:assignmentId/questions/:questionId/submissions/:studen
         });
 
     } catch (error) {
-        console.error('Error loading submission page:', error);
+        console.error('Error loading submission:', error);
         res.status(500).render('error', {
             message: 'Error loading submission'
         });
@@ -232,9 +231,10 @@ router.get('/assignments/:assignmentId/questions/:questionId/submissions/:studen
 });
 
 // Generate AI report for a question
-router.get('/:id/questions/:questionId/report', auth, requireRole(['teacher']), async (req, res) => {
+router.get('/assignments/:id/questions/:questionId/report', auth, requireRole(['teacher']), async (req, res) => {
     try {
         const { id: assignmentId, questionId } = req.params;
+        console.log('Generating report for:', { assignmentId, questionId });
 
         // Get assignment and verify teacher ownership
         const assignment = await Assignment.findById(assignmentId)
@@ -251,13 +251,13 @@ router.get('/:id/questions/:questionId/report', auth, requireRole(['teacher']), 
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        // Get the specific question
+        // Get question
         const question = assignment.questions.id(questionId);
         if (!question) {
             return res.status(404).json({ error: 'Question not found' });
         }
 
-        // Get all student submissions for this question
+        // Get student submissions
         const studentAssignments = await StudentAssignment.find({
             assignmentId,
             'submissions.questionId': questionId
@@ -266,9 +266,10 @@ router.get('/:id/questions/:questionId/report', auth, requireRole(['teacher']), 
         // Process submissions for analysis
         const submissions = studentAssignments
             .map(sa => {
-                const submission = sa.submissions.find(s => 
+                const submission = sa.submissions.find(s =>
                     s.questionId.toString() === questionId
                 );
+
                 if (!submission) return null;
 
                 return {
@@ -283,7 +284,7 @@ router.get('/:id/questions/:questionId/report', auth, requireRole(['teacher']), 
             })
             .filter(Boolean);
 
-        // Calculate submission statistics
+        // Calculate stats
         const stats = {
             totalSubmissions: submissions.length,
             completed: submissions.filter(s => s.status === 'completed').length,
@@ -291,33 +292,28 @@ router.get('/:id/questions/:questionId/report', auth, requireRole(['teacher']), 
             averageHints: (submissions.reduce((acc, s) => acc + s.hintsUsed, 0) / submissions.length || 0).toFixed(1)
         };
 
-        // Generate the report using groqService
+        // Generate report
         const report = await groqService.generateClassReport(
-            question.question, // Pass the question content
+            question.question,
             submissions,
             stats
         );
 
-        // Send the response
         res.json({
-            stats,
-            report: {
-                ...report,
-                timestamp: new Date(),
-                submissionCount: submissions.length
-            }
+            success: true,
+            report,
+            stats
         });
 
     } catch (error) {
         console.error('Error generating report:', error);
         res.status(500).json({
+            success: false,
             error: 'Failed to generate report',
             details: error.message
         });
     }
 });
-
-
 
 // View specific classroom
 router.get('/classroom/:id', authPage(['teacher']), async (req, res) => {
@@ -388,10 +384,10 @@ router.get('/classroom/:id', authPage(['teacher']), async (req, res) => {
     }
 });
 
-// GET route to show the create assignment form
+// Create assignment form route
 router.get('/assignments/create/:classroomId', authPage(['teacher']), async (req, res) => {
     try {
-        // First verify the teacher owns this classroom
+        // Verify teacher owns this classroom
         const classroom = await Classroom.findOne({
             _id: req.params.classroomId,
             teacherId: req.user._id
@@ -415,12 +411,12 @@ router.get('/assignments/create/:classroomId', authPage(['teacher']), async (req
     }
 });
 
-// POST route to handle the assignment creation
+// Handle assignment creation
 router.post('/assignments/create', authPage(['teacher']), async (req, res) => {
     try {
         const { classroomId, title, description, dueDate, questions } = req.body;
 
-        // Verify the teacher owns this classroom
+        // Verify teacher owns this classroom
         const classroom = await Classroom.findOne({
             _id: classroomId,
             teacherId: req.user._id
@@ -428,6 +424,11 @@ router.post('/assignments/create', authPage(['teacher']), async (req, res) => {
 
         if (!classroom) {
             return res.status(404).json({ error: 'Classroom not found' });
+        }
+
+        // Input validation
+        if (!title || !questions || !Array.isArray(questions)) {
+            return res.status(400).json({ error: 'Invalid input data' });
         }
 
         // Create the assignment
@@ -440,7 +441,8 @@ router.post('/assignments/create', authPage(['teacher']), async (req, res) => {
                 question: q.question,
                 solution: q.solution,
                 type: 'math'
-            }))
+            })),
+            active: true
         });
 
         await assignment.save();
@@ -450,12 +452,14 @@ router.post('/assignments/create', authPage(['teacher']), async (req, res) => {
             const studentAssignments = classroom.students.map(studentId => ({
                 studentId,
                 assignmentId: assignment._id,
-                classroomId
+                classroomId,
+                status: 'not_started',
+                submissions: []
             }));
+
             await StudentAssignment.insertMany(studentAssignments);
         }
 
-        // Redirect back to classroom page
         res.redirect(`/teacher/classroom/${classroomId}`);
     } catch (error) {
         console.error('Error creating assignment:', error);
@@ -463,4 +467,100 @@ router.post('/assignments/create', authPage(['teacher']), async (req, res) => {
     }
 });
 
+// Update assignment status
+router.patch('/assignments/:id/status', authPage(['teacher']), async (req, res) => {
+    try {
+        const { active } = req.body;
+        const assignment = await Assignment.findOne({
+            _id: req.params.id
+        }).populate('classroomId');
+
+        if (!assignment) {
+            return res.status(404).json({ error: 'Assignment not found' });
+        }
+
+        // Verify ownership
+        if (!assignment.classroomId.teacherId.equals(req.user._id)) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        assignment.active = active;
+        await assignment.save();
+
+        res.json({ message: 'Assignment status updated successfully' });
+    } catch (error) {
+        console.error('Error updating assignment status:', error);
+        res.status(500).json({ error: 'Failed to update assignment status' });
+    }
+});
+
+// Delete assignment
+router.delete('/assignments/:id', authPage(['teacher']), async (req, res) => {
+    try {
+        const assignment = await Assignment.findOne({
+            _id: req.params.id
+        }).populate('classroomId');
+
+        if (!assignment) {
+            return res.status(404).json({ error: 'Assignment not found' });
+        }
+
+        // Verify ownership
+        if (!assignment.classroomId.teacherId.equals(req.user._id)) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Delete all related student assignments
+        await StudentAssignment.deleteMany({
+            assignmentId: assignment._id
+        });
+
+        // Delete the assignment
+        await Assignment.deleteOne({ _id: assignment._id });
+
+        res.json({ message: 'Assignment deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting assignment:', error);
+        res.status(500).json({ error: 'Failed to delete assignment' });
+    }
+});
+
+// Helper function to validate assignment input
+function validateAssignmentInput(data) {
+    const { title, questions } = data;
+    
+    if (!title || typeof title !== 'string' || title.trim().length === 0) {
+        throw new Error('Valid title is required');
+    }
+    
+    if (!Array.isArray(questions) || questions.length === 0) {
+        throw new Error('At least one question is required');
+    }
+    
+    questions.forEach((q, index) => {
+        if (!q.question || typeof q.question !== 'string' || q.question.trim().length === 0) {
+            throw new Error(`Question ${index + 1} is missing content`);
+        }
+    });
+
+    return true;
+}
+
+// Error handling middleware
+router.use((err, req, res, next) => {
+    console.error('Teacher route error:', err);
+    if (req.xhr || req.headers.accept.includes('json')) {
+        res.status(500).json({ 
+            error: 'An unexpected error occurred',
+            details: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
+    } else {
+        res.status(500).render('error', {
+            message: 'An unexpected error occurred',
+            error: process.env.NODE_ENV === 'development' ? err : {}
+        });
+    }
+});
+
 export default router;
+

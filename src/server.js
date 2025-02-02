@@ -31,9 +31,16 @@ const client = new Groq({
     apiKey: process.env.GROQ_API_KEY
 });
 
+
+
 app.use(express.json()); 
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+// Add this near the top of your middleware stack
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    next();
+});
 
 app.use('/api/auth', authRouter);
 app.use('/topics', topicsRouter);     // For rendering topic pages

@@ -57,7 +57,7 @@
                     </div>
                 </div>
 
-                {{!-- Question Content & Submissions (Hidden by default) --}}
+                {{!-- Question Content & Submissions --}}
                 <div id="question-{{questionNumber}}-details" class="hidden">
                     <div class="p-6 border-b border-gray-200">
                         <h4 class="text-sm font-medium text-gray-900 mb-2">Question Content:</h4>
@@ -70,14 +70,16 @@
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h4 class="text-lg font-medium text-gray-900">Student Submissions</h4>
-                            <button onclick="generateReport({{questionNumber}}, '{{../_id}}', '{{_id}}')"
+                            {{!-- Replace the old button with this new version --}}
+                            <button onclick="generateReport({{questionNumber}}, '{{assignmentId}}', '{{questionId}}')"
                                     class="inline-flex items-center px-4 py-2 border border-transparent rounded-md 
-                                           shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
+                                        text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
                                 Generate AI Report
                             </button>
+                            
                         </div>
 
-                        {{!-- AI Report Section (Hidden initially) --}}
+                        {{!-- AI Report Section --}}
                         <div id="ai-report-{{questionNumber}}" class="hidden mb-6">
                             <div class="bg-orange-50 rounded-lg p-6 space-y-4">
                                 <h5 class="text-sm font-medium text-gray-900">AI Analysis Report</h5>
@@ -88,68 +90,57 @@
                         </div>
 
                         {{!-- Submissions Table --}}
-<div class="mt-4 overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Submission Type</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hints Used</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Updated</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-            {{#each submissions}}
-            <tr>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">{{studentName}}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="inline-flex px-2 text-xs font-semibold rounded-full
-                        {{#if (eq status 'completed')}}
-                            bg-green-100 text-green-800
-                        {{else if (eq status 'in_progress')}}
-                            bg-blue-100 text-blue-800
-                        {{else}}
-                            bg-gray-100 text-gray-800
-                        {{/if}}">
-                        {{status}}
-                    </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{mode}}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{hintsUsed}}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{formatDate submissionTime}}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <a href="/teacher/assignments/{{../../assignment._id}}/questions/{{../questionId}}/submissions/{{studentId}}"
-                       class="text-orange-600 hover:text-orange-900 inline-flex items-center gap-1">
-                        View Work
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
-                    </a>
-                </td>
-            </tr>
-            {{/each}}
-        </tbody>
-    </table>
-</div>
+                        <div class="mt-4 overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Submission Type</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hints Used</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Updated</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {{#each submissions}}
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">{{studentName}}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 text-xs font-semibold rounded-full
+                                                {{#if (eq status 'completed')}}
+                                                    bg-green-100 text-green-800
+                                                {{else if (eq status 'in_progress')}}
+                                                    bg-blue-100 text-blue-800
+                                                {{else}}
+                                                    bg-gray-100 text-gray-800
+                                                {{/if}}">
+                                                {{status}}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{mode}}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{hintsUsed}}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{formatDate submissionTime}}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <a href="/teacher/assignments/{{../../assignment._id}}/questions/{{../questionId}}/submissions/{{studentId}}"
+                                               class="text-orange-600 hover:text-orange-900 inline-flex items-center gap-1">
+                                                View Work
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                                </svg>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {{/each}}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
             {{/each}}
-        </div>
-    </div>
-</div>
-
-{{!-- Modal for viewing student work --}}
-<div id="submissionModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden">
-    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-        <div class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl w-full max-w-4xl">
-            <div id="submissionModalContent">
-                {{!-- Content will be loaded here --}}
-            </div>
         </div>
     </div>
 </div>
@@ -168,186 +159,91 @@ async function generateReport(questionNumber, assignmentId, questionId) {
     const reportContent = document.getElementById(`ai-report-content-${questionNumber}`);
     
     try {
-        reportSection.classList.remove('hidden');
-        reportContent.innerHTML = '<div class="text-gray-500">Generating report...</div>';
-        
-        const response = await fetch(`/api/assignments/${assignmentId}/questions/${questionId}/report`);
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to generate report');
+        // Input validation
+        if (!assignmentId || !questionId) {
+            console.error('Missing IDs:', { assignmentId, questionId });
+            throw new Error('Missing required parameters');
         }
-        
+
+        reportSection.classList.remove('hidden');
+        reportContent.innerHTML = `
+            <div class="flex items-center justify-center p-4">
+                <svg class="animate-spin h-5 w-5 mr-3 text-orange-500" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-gray-600">Generating report...</span>
+            </div>`;
+
+        const response = await fetch(`/api/assignments/${assignmentId}/questions/${questionId}/report`);
         const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to generate report');
+        }
+
+        const report = data.report;
         
-        // Format the report nicely
-        const reportHTML = `
-            <div class="space-y-4">
-                <div>
-                    <h6 class="text-sm font-medium text-gray-900">Performance Overview</h6>
-                    <p class="text-sm text-gray-600 mt-2">${data.report.performancePatterns.summary}</p>
-                    <ul class="mt-2 list-disc pl-5 space-y-1">
-                        ${data.report.performancePatterns.keyPatterns.map(p => 
-                            `<li class="text-sm text-gray-600">${p}</li>`
-                        ).join('')}
-                    </ul>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div>
-                        <h6 class="text-sm font-medium text-green-600">Common Strengths</h6>
-                        <ul class="mt-2 list-disc pl-5">
-                            ${data.report.commonStrengths.map(s => 
-                                `<li class="text-sm text-gray-600">${s}</li>`
-                            ).join('')}
-                        </ul>
-                    </div>
+        reportContent.innerHTML = `
+            <div class="space-y-6">
+                <div class="bg-orange-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">Performance Summary</h4>
+                    <p class="text-gray-600">${report.performancePatterns.summary}</p>
                     
-                    <div>
-                        <h6 class="text-sm font-medium text-orange-600">Areas for Improvement</h6>
-                        <ul class="mt-2 list-disc pl-5">
-                            ${data.report.commonDifficulties.map(d => 
-                                `<li class="text-sm text-gray-600">${d}</li>`
+                    <div class="mt-4">
+                        <h4 class="font-medium text-gray-900 mb-2">Key Patterns</h4>
+                        <ul class="list-disc pl-5 space-y-1">
+                            ${report.performancePatterns.keyPatterns.map(pattern => 
+                                `<li class="text-gray-600">${pattern}</li>`
                             ).join('')}
                         </ul>
                     </div>
                 </div>
 
-                <div class="mt-4">
-                    <h6 class="text-sm font-medium text-gray-900">Common Misconceptions</h6>
-                    <ul class="mt-2 list-disc pl-5">
-                        ${data.report.misconceptions.map(m => 
-                            `<li class="text-sm text-gray-600">${m}</li>`
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-orange-50 rounded-lg p-4">
+                        <h4 class="font-medium text-gray-900 mb-2">Common Strengths</h4>
+                        <ul class="list-disc pl-5 space-y-1">
+                            ${report.commonStrengths.map(strength => 
+                                `<li class="text-gray-600">${strength}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+
+                    <div class="bg-orange-50 rounded-lg p-4">
+                        <h4 class="font-medium text-gray-900 mb-2">Areas for Improvement</h4>
+                        <ul class="list-disc pl-5 space-y-1">
+                            ${report.commonDifficulties.map(difficulty => 
+                                `<li class="text-gray-600">${difficulty}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="bg-orange-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">Teaching Recommendations</h4>
+                    <ul class="list-disc pl-5 space-y-1">
+                        ${report.teachingRecommendations.map(rec => 
+                            `<li class="text-gray-600">${rec}</li>`
                         ).join('')}
                     </ul>
                 </div>
 
-                <div class="mt-4">
-                    <h6 class="text-sm font-medium text-gray-900">Teaching Recommendations</h6>
-                    <ul class="mt-2 list-disc pl-5">
-                        ${data.report.teachingRecommendations.map(r => 
-                            `<li class="text-sm text-gray-600">${r}</li>`
-                        ).join('')}
-                    </ul>
-                </div>
-
-                <div class="mt-6 pt-4 border-t border-gray-200 text-sm text-gray-500">
-                    Generated at: ${new Date(data.report.timestamp).toLocaleString()}
-                    <br>
-                    Based on ${data.report.submissionCount} submissions
+                <div class="text-xs text-gray-500">
+                    Generated at: ${new Date(report.generatedAt).toLocaleString()}
                 </div>
             </div>`;
 
-        reportContent.innerHTML = reportHTML;
-
     } catch (error) {
-        console.error('Error generating report:', error);
+        console.error('Error:', error);
         reportContent.innerHTML = `
-            <div class="text-red-500">
-                Failed to generate report. Please try again.
-                <button onclick="generateReport('${questionNumber}', '${assignmentId}', '${questionId}')"
+            <div class="bg-red-50 text-red-500 p-4 rounded-lg">
+                ${error.message}
+                <button onclick="generateReport(${questionNumber}, '${assignmentId}', '${questionId}')" 
                         class="ml-2 text-orange-600 hover:text-orange-700">
                     Retry
                 </button>
             </div>`;
     }
 }
-
-async function viewSubmission(assignmentId, questionId, studentId) {
-    const modal = document.getElementById('submissionModal');
-    const content = document.getElementById('submissionModalContent');
-    
-    try {
-        modal.classList.remove('hidden');
-        content.innerHTML = 'Loading submission...';
-        
-        const response = await fetch(`/teacher/assignments/${assignmentId}/submissions/${questionId}/${studentId}`);
-        
-        if (!response.ok) throw new Error('Failed to load submission');
-        
-        const data = await response.json();
-        
-        // Format the submission content
-        content.innerHTML = `
-            <div class="absolute right-0 top-0 pr-4 pt-4">
-                <button onclick="closeSubmissionModal()" 
-                        class="text-gray-400 hover:text-gray-500">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="p-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">
-                    ${data.studentName}'s Work
-                </h3>
-
-                <div class="space-y-6">
-                    <!-- Show work based on submission mode -->
-                    ${data.mode === 'canvas' 
-                        ? `<img src="${data.work}" alt="Student's work" class="max-w-full rounded-lg border border-gray-200">`
-                        : `<div class="prose max-w-none">
-                            ${data.mode === 'latex' 
-                                ? `<div class="latex-content">${data.work}</div>`
-                                : `<pre class="bg-gray-50 p-4 rounded-lg">${data.work}</pre>`
-                            }
-                           </div>`
-                    }
-
-                    ${data.feedback ? `
-                        <div class="mt-6 border-t border-gray-200 pt-6">
-                            <h4 class="text-sm font-medium text-gray-900 mb-4">AI Feedback</h4>
-                            
-                            <div class="space-y-4">
-                                <div>
-                                    <h5 class="text-sm font-medium text-green-600">Strengths</h5>
-                                    <ul class="mt-2 list-disc pl-5">
-                                        ${data.feedback.strengths.map(s => 
-                                            `<li class="text-sm text-gray-600">${s}</li>`
-                                        ).join('')}
-                                    </ul>
-                                </div>
-
-                                <div>
-                                    <h5 class="text-sm font-medium text-orange-600">Areas for Improvement</h5>
-                                    <ul class="mt-2 list-disc pl-5">
-                                        ${data.feedback.improvements.map(i => 
-                                            `<li class="text-sm text-gray-600">${i}</li>`
-                                        ).join('')}
-                                    </ul>
-                                </div>
-
-                                <div>
-                                    <h5 class="text-sm font-medium text-gray-900">Analysis</h5>
-                                    <p class="mt-2 text-sm text-gray-600">${data.feedback.aiAnalysis}</p>
-                                </div>
-                            </div>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>`;
-
-        // Typeset any LaTeX content if present
-        if (window.MathJax && data.mode === 'latex') {
-            window.MathJax.typeset();
-        }
-
-    } catch (error) {
-        console.error('Error loading submission:', error);
-        content.innerHTML = 'Failed to load submission. Please try again.';
-    }
-}
-
-function closeSubmissionModal() {
-    const modal = document.getElementById('submissionModal');
-    modal.classList.add('hidden');
-}
-
-// Close modal when clicking outside
-document.getElementById('submissionModal').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) {
-        closeSubmissionModal();
-    }
-});
 </script>
