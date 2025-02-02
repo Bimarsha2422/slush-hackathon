@@ -150,6 +150,50 @@
     </div>
 </div>
 
+
+{{#if assignmentContext}}
+    {{#if assignmentContext.status}}
+        {{#if savedWork}}
+            <div class="mt-8 bg-white rounded-lg border border-gray-200 p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-6">Previous Feedback</h2>
+                
+                {{#if feedback}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-sm font-medium text-green-600 mb-2">Strengths</h3>
+                        <ul class="list-disc pl-5 space-y-2">
+                            {{#each feedback.strengths}}
+                            <li class="text-sm text-gray-600">{{this}}</li>
+                            {{/each}}
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-sm font-medium text-orange-600 mb-2">Areas for Improvement</h3>
+                        <ul class="list-disc pl-5 space-y-2">
+                            {{#each feedback.improvements}}
+                            <li class="text-sm text-gray-600">{{this}}</li>
+                            {{/each}}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-900 mb-2">Overall Analysis</h3>
+                    <p class="text-sm text-gray-600">{{feedback.aiAnalysis}}</p>
+                </div>
+
+                {{#if feedback.submissionTime}}
+                <div class="mt-4 text-xs text-gray-400">
+                    Feedback generated: {{formatDate feedback.submissionTime}}
+                </div>
+                {{/if}}
+                {{/if}}
+            </div>
+        {{/if}}
+    {{/if}}
+{{/if}}   
+
       <!-- Help Section -->
       <div class="help-section">
         <div class="section-header">Need Help?</div>
@@ -974,15 +1018,10 @@ function showAssignmentComplete() {
             <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
-            Assignment Complete! Redirecting to assignment overview...
+            Assignment Complete! 
         </div>
     `;
     document.body.appendChild(message);
-    
-    // Redirect after 2 seconds
-    setTimeout(() => {
-        window.location.href = `/student/assignment/${assignmentContext.assignmentId}`;
-    }, 2000);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
