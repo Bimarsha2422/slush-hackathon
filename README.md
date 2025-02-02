@@ -18,7 +18,7 @@ Moreover, modern online homework platforms often lack personalization, leaving s
 LearnSageAI tackles these problems head-on by offering a platform that integrates AI responsibly to enhance learning for both teachers and students.
 
 ### For Teachers 👨‍🏫👩‍🏫
-![Teacher's View](src/public/images/student.png)
+![Teacher's View](src/public/images/teacher.png)
 
 - Create online classrooms and assignments easily
 - Get detailed insights on student performance
