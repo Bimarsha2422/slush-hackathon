@@ -135,7 +135,8 @@ router.get('/assignments/:id', authPage(['teacher']), async (req, res) => {
                 questions: questionsWithStats
             },
             classroom: assignment.classroomId,
-            studentCount: assignment.classroomId.students.length
+            studentCount: assignment.classroomId.students.length, 
+            classroomId: assignment.classroomId._id, 
         };
 
         res.render('teacher/assignment-details', viewData);
