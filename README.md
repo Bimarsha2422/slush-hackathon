@@ -2,6 +2,7 @@
 # LearnSageAI 🎓
 ![Teacher Dashboard](src/public/images/dashboard.png)
 
+
 **The AI-Enhanced Personalized Learning Platform for Teachers and Students**
 
 LearnSageAI is a cutting-edge online learning platform designed to revolutionize the way teachers assign homework and students learn. By harnessing the power of artificial intelligence, we provide a personalized, engaging, and insightful learning experience that benefits both educators and learners.
@@ -17,12 +18,14 @@ Moreover, modern online homework platforms often lack personalization, leaving s
 LearnSageAI tackles these problems head-on by offering a platform that integrates AI responsibly to enhance learning for both teachers and students.
 
 ### For Teachers 👨‍🏫👩‍🏫
+![Teacher's View](src/public/images/student.png)
 
 - Create online classrooms and assignments easily
 - Get detailed insights on student performance
 - Receive personalized recommendations to optimize teaching
 
 ### For Students 👨‍🎓👩‍🎓
+![Student Work Interface](src/public/images/student.png)
 
 - Get AI-assisted problem-solving with hints, next steps, and answer improvements
 - Choose to write, type in LaTeX, or draw on a canvas
