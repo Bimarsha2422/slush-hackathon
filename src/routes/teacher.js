@@ -94,32 +94,35 @@ router.get('/assignments/:id', authPage(['teacher']), async (req, res) => {
         }).populate('studentId', 'name email');
 
         // Format questions with submission stats
-        const questionsWithStats = assignment.questions.map((question, index) => {
-            const submissions = studentSubmissions.map(sa => {
+        const questionsWithStats = assignment.questions.map((question) => {
+            const questionSubmissions = studentSubmissions.map(sa => {
                 const submission = sa.submissions.find(s => 
                     s.questionId.equals(question._id)
                 );
                 return submission ? {
-                    studentName: sa.studentId.name,
                     studentId: sa.studentId._id,
+                    studentName: sa.studentId.name,
                     status: submission.isComplete ? 'completed' : 
                             submission.work ? 'in_progress' : 'not_started',
                     mode: submission.mode,
                     hintsUsed: submission.hints?.length || 0,
                     submissionTime: submission.submittedAt,
-                    feedback: submission.feedback
+                    questionId: question._id // Add this line to explicitly pass question ID
                 } : null;
             }).filter(Boolean);
-
+        
             return {
                 ...question.toObject(),
-                questionNumber: index + 1,
-                submissions,
+                questionId: question._id,  // Ensure questionId is available at this level
+                _id: question._id,
+                questionNumber: assignment.questions.indexOf(question) + 1,
+                submissions: questionSubmissions,
                 stats: {
-                    totalSubmissions: submissions.length,
-                    completed: submissions.filter(s => s.status === 'completed').length,
-                    inProgress: submissions.filter(s => s.status === 'in_progress').length,
-                    averageHints: Math.round(submissions.reduce((acc, s) => acc + s.hintsUsed, 0) / submissions.length || 0)
+                    totalSubmissions: questionSubmissions.length,
+                    completed: questionSubmissions.filter(s => s.status === 'completed').length,
+                    inProgress: questionSubmissions.filter(s => s.status === 'in_progress').length,
+                    averageHints: (questionSubmissions.reduce((acc, s) => acc + s.hintsUsed, 0) / 
+                                 questionSubmissions.length || 0).toFixed(1)
                 }
             };
         });
@@ -146,26 +149,38 @@ router.get('/assignments/:id', authPage(['teacher']), async (req, res) => {
 
 
 // View individual student submission
-router.get('/assignments/:assignmentId/submissions/:questionId/:studentId', authPage(['teacher']), async (req, res) => {
+router.get('/assignments/:assignmentId/questions/:questionId/submissions/:studentId', authPage(['teacher']), async (req, res) => {
     try {
         const { assignmentId, questionId, studentId } = req.params;
+        console.log('Params:', { assignmentId, questionId, studentId }); // Debug log
 
-        // Get assignment and verify teacher ownership
-        const assignment = await Assignment.findById(assignmentId)
-            .populate('classroomId');
+        // Get assignment with classroom info
+        const assignment = await Assignment.findById(assignmentId);
+        if (!assignment) {
+            console.log('Assignment not found:', assignmentId);
+            return res.status(404).render('error', { message: 'Assignment not found' });
+        }
+        console.log('Found assignment:', assignment._id); // Debug log
 
-        if (!assignment || !assignment.classroomId.teacherId.equals(req.user._id)) {
-            return res.status(403).json({ error: 'Access denied' });
+        await assignment.populate('classroomId');
+
+        if (!assignment.classroomId.teacherId.equals(req.user._id)) {
+            return res.status(403).render('error', { message: 'Access denied' });
         }
 
-        // Get student submission
+        // Get student info and submission with populated student data
         const studentAssignment = await StudentAssignment.findOne({
             assignmentId,
             studentId
-        }).populate('studentId', 'name');
+        }).populate('studentId', 'name email');
 
         if (!studentAssignment) {
-            return res.status(404).json({ error: 'Submission not found' });
+            return res.status(404).render('error', { message: 'Submission not found' });
+        }
+
+        const question = assignment.questions.id(questionId);
+        if (!question) {
+            return res.status(404).render('error', { message: 'Question not found' });
         }
 
         const submission = studentAssignment.submissions.find(s => 
@@ -173,71 +188,131 @@ router.get('/assignments/:assignmentId/submissions/:questionId/:studentId', auth
         );
 
         if (!submission) {
-            return res.status(404).json({ error: 'Submission not found' });
+            return res.status(404).render('error', { message: 'No work found for this question' });
         }
 
-        res.json({
-            studentName: studentAssignment.studentId.name,
-            work: submission.work,
-            mode: submission.mode,
-            feedback: submission.feedback,
-            submissionTime: submission.submittedAt,
-            hintsUsed: submission.hints?.length || 0
+        // For canvas submissions, ensure proper image data format
+        if (submission.mode === 'canvas' && !submission.work.startsWith('data:image')) {
+            submission.work = `data:image/png;base64,${submission.work}`;
+        }
+
+        console.log('Rendering with assignment ID:', assignment._id); // Debug log
+
+        // Render with complete data
+        res.render('teacher/student-submission', {
+            title: `${studentAssignment.studentId.name}'s Work - ${assignment.title}`,
+            assignment: {
+                _id: assignment._id.toString(),  // Explicitly include ID as string
+                title: assignment.title
+            },
+            student: studentAssignment.studentId,
+            question: {
+                content: question.question,
+                number: assignment.questions.indexOf(question) + 1
+            },
+            questionNumber: assignment.questions.indexOf(question) + 1,
+            totalQuestions: assignment.questions.length,
+            submission: {
+                work: submission.work,
+                mode: submission.mode,
+                status: submission.isComplete ? 'completed' : 'in_progress',
+                submissionTime: submission.submittedAt,
+                hints: submission.hints || [],
+                feedback: submission.feedback
+            }
         });
 
     } catch (error) {
-        console.error('Error loading submission:', error);
-        res.status(500).json({ error: 'Failed to load submission' });
+        console.error('Error loading submission page:', error);
+        res.status(500).render('error', {
+            message: 'Error loading submission'
+        });
     }
 });
 
 // Generate AI report for a question
-router.get('/assignments/:assignmentId/questions/:questionId/report', authPage(['teacher']), async (req, res) => {
+router.get('/:id/questions/:questionId/report', auth, requireRole(['teacher']), async (req, res) => {
     try {
-        const { assignmentId, questionId } = req.params;
+        const { id: assignmentId, questionId } = req.params;
 
         // Get assignment and verify teacher ownership
         const assignment = await Assignment.findById(assignmentId)
-            .populate('classroomId');
+            .populate({
+                path: 'classroomId',
+                select: 'teacherId name'
+            });
 
-        if (!assignment || !assignment.classroomId.teacherId.equals(req.user._id)) {
+        if (!assignment) {
+            return res.status(404).json({ error: 'Assignment not found' });
+        }
+
+        if (!assignment.classroomId.teacherId.equals(req.user._id)) {
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        // Get all submissions for this question
+        // Get the specific question
+        const question = assignment.questions.id(questionId);
+        if (!question) {
+            return res.status(404).json({ error: 'Question not found' });
+        }
+
+        // Get all student submissions for this question
         const studentAssignments = await StudentAssignment.find({
             assignmentId,
             'submissions.questionId': questionId
         }).populate('studentId', 'name');
 
-        // Format submissions for analysis
+        // Process submissions for analysis
         const submissions = studentAssignments
             .map(sa => {
                 const submission = sa.submissions.find(s => 
                     s.questionId.toString() === questionId
                 );
-                return submission ? {
-                    studentId: sa.studentId.name,
+                if (!submission) return null;
+
+                return {
+                    studentName: sa.studentId.name,
                     work: submission.work,
-                    hints: submission.hints || [],
                     mode: submission.mode,
-                    feedback: submission.feedback
-                } : null;
+                    hintsUsed: submission.hints?.length || 0,
+                    status: submission.isComplete ? 'completed' : 'in_progress',
+                    feedback: submission.feedback,
+                    submissionTime: submission.submittedAt
+                };
             })
             .filter(Boolean);
 
-        // Generate report using groqService
+        // Calculate submission statistics
+        const stats = {
+            totalSubmissions: submissions.length,
+            completed: submissions.filter(s => s.status === 'completed').length,
+            inProgress: submissions.filter(s => s.status === 'in_progress').length,
+            averageHints: (submissions.reduce((acc, s) => acc + s.hintsUsed, 0) / submissions.length || 0).toFixed(1)
+        };
+
+        // Generate the report using groqService
         const report = await groqService.generateClassReport(
-            assignmentId,
-            questionId,
-            submissions
+            question.question, // Pass the question content
+            submissions,
+            stats
         );
 
-        res.json({ report });
+        // Send the response
+        res.json({
+            stats,
+            report: {
+                ...report,
+                timestamp: new Date(),
+                submissionCount: submissions.length
+            }
+        });
 
     } catch (error) {
         console.error('Error generating report:', error);
-        res.status(500).json({ error: 'Failed to generate report' });
+        res.status(500).json({
+            error: 'Failed to generate report',
+            details: error.message
+        });
     }
 });
 

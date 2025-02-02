@@ -4,6 +4,7 @@ import { auth, requireRole } from '../../middleware/auth.js';
 import Classroom from '../../models/Classroom.js';
 import Assignment from '../../models/Assignment.js';
 import StudentAssignment from '../../models/StudentAssignment.js';
+import { groqService } from '../../services/groq.js';
 
 const router = express.Router();
 
@@ -21,11 +22,7 @@ router.get('/:id/questions/:questionId/report', auth, requireRole(['teacher']), 
                 select: 'teacherId name'
             });
 
-        if (!assignment) {
-            return res.status(404).json({ error: 'Assignment not found' });
-        }
-
-        if (!assignment.classroomId.teacherId.equals(req.user._id)) {
+        if (!assignment || !assignment.classroomId.teacherId.equals(req.user._id)) {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -35,42 +32,58 @@ router.get('/:id/questions/:questionId/report', auth, requireRole(['teacher']), 
             'submissions.questionId': questionId
         }).populate('studentId', 'name');
 
-        // Process submissions for analysis
-        const submissions = studentAssignments.map(sa => {
-            const submission = sa.submissions.find(s => 
-                s.questionId.toString() === questionId
-            );
-            return submission ? {
-                studentId: sa.studentId.name,
-                work: submission.work,
-                hints: submission.hints || [],
-                isComplete: submission.isComplete,
-                mode: submission.mode,
-                feedback: submission.feedback
-            } : null;
-        }).filter(Boolean);
+        // Process submissions for analysis, including feedback
+        const submissions = studentAssignments
+            .map(sa => {
+                const submission = sa.submissions.find(s => 
+                    s.questionId.toString() === questionId
+                );
+                if (!submission) return null;
 
-        // Get class report from groqService
-        const report = await groqService.generateClassReport(
-            assignmentId,
-            questionId,
-            submissions
-        );
+                return {
+                    studentId: sa.studentId.name,
+                    work: submission.work,
+                    hints: submission.hints || [],
+                    mode: submission.mode,
+                    feedback: submission.feedback || {},
+                    status: submission.isComplete ? 'completed' : 
+                            submission.work ? 'in_progress' : 'not_started',
+                    submissionTime: submission.submittedAt
+                };
+            })
+            .filter(Boolean);
 
-        // Calculate statistics
+        // Get the question content for context
+        const question = assignment.questions.id(questionId);
+        if (!question) {
+            return res.status(404).json({ error: 'Question not found' });
+        }
+
+        // Calculate submission statistics
         const stats = {
-            totalStudents: studentAssignments.length,
-            submittedCount: submissions.length,
-            completedCount: submissions.filter(s => s.isComplete).length,
-            averageHints: Number((submissions.reduce((acc, s) => acc + s.hints.length, 0) / submissions.length || 0).toFixed(2)),
+            totalSubmissions: submissions.length,
+            completed: submissions.filter(s => s.status === 'completed').length,
+            inProgress: submissions.filter(s => s.status === 'in_progress').length,
+            averageHints: (submissions.reduce((acc, s) => acc + s.hints.length, 0) / submissions.length || 0).toFixed(1),
+            submissionModes: Object.entries(
+                submissions.reduce((acc, s) => {
+                    acc[s.mode] = (acc[s.mode] || 0) + 1;
+                    return acc;
+                }, {})
+            )
         };
 
+        // Generate AI report with enhanced context
+        const report = await groqService.generateClassReport(
+            question.question,
+            submissions,
+            stats
+        );
+
         res.json({
-            assignmentName: assignment.title,
-            questionNumber: assignment.questions.findIndex(q => q._id.toString() === questionId) + 1,
             stats,
             report,
-            lastUpdated: new Date()
+            timestamp: new Date()
         });
 
     } catch (error) {
@@ -81,7 +94,6 @@ router.get('/:id/questions/:questionId/report', auth, requireRole(['teacher']), 
         });
     }
 });
-
 router.post('/', auth, requireRole(['teacher']), async (req, res) => {
     try {
         const { classroomId, title, description, dueDate, questions } = req.body;

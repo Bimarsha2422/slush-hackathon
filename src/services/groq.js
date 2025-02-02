@@ -61,34 +61,47 @@ Return a JSON object with the following structure:
         }
     }
 
-    async generateClassReport(assignmentId, questionId, submissions) {
+    async generateClassReport(questionContent, submissions, stats) {
         try {
             const promptTemplate = `
-Analyze these student submissions for a math question and provide a comprehensive class report.
-Consider:
-1. Overall performance patterns
-2. Common strengths
-3. Common difficulties
-4. Specific misconceptions
-5. Teaching recommendations
-
-Return a JSON object with the following structure:
-{
-    "performancePatterns": {
-        "summary": "Overall performance summary",
-        "keyPatterns": ["pattern1", "pattern2", "pattern3"]
-    },
-    "commonStrengths": ["strength1", "strength2", "strength3"],
-    "commonDifficulties": ["difficulty1", "difficulty2", "difficulty3"],
-    "misconceptions": ["misconception1", "misconception2", "misconception3"],
-    "teachingRecommendations": ["recommendation1", "recommendation2", "recommendation3"],
-    "overallSummary": "2-3 sentence summary of class performance"
-}`;
-
-            const submissionsText = submissions.map(sub => 
-                `Student ${sub.studentId}:\n${sub.work}\nHints used: ${sub.hints.length}\n`
-            ).join('\n---\n');
-
+    You are analyzing student submissions for a math question. Generate a comprehensive class report.
+    The question is: ${questionContent}
+    
+    Statistics:
+    - Total submissions: ${stats.totalSubmissions}
+    - Completed: ${stats.completed}
+    - In Progress: ${stats.inProgress}
+    - Average hints used: ${stats.averageHints}
+    
+    Based on the submissions provided, analyze:
+    1. Overall performance patterns and trends
+    2. Common strengths demonstrated by students
+    3. Common difficulties and areas needing improvement
+    4. Specific misconceptions identified
+    5. Recommendations for teaching and intervention
+    
+    Format your response as a JSON object with the following structure:
+    {
+        "performancePatterns": {
+            "summary": "2-3 sentence overview of class performance",
+            "keyPatterns": ["pattern1", "pattern2", "pattern3"]
+        },
+        "commonStrengths": ["strength1", "strength2", "strength3"],
+        "commonDifficulties": ["difficulty1", "difficulty2", "difficulty3"],
+        "misconceptions": ["misconception1", "misconception2"],
+        "teachingRecommendations": ["recommendation1", "recommendation2", "recommendation3"]
+    }`;
+    
+            // Process submissions to include relevant information
+            const submissionDetails = submissions.map(sub => ({
+                status: sub.status,
+                hintsUsed: sub.hintsUsed,
+                workMode: sub.mode,
+                hasSubmitted: Boolean(sub.work),
+                hasFeedback: Boolean(sub.feedback),
+                workSample: sub.work?.substring(0, 200) // Limit work sample size
+            }));
+    
             const chatCompletion = await this.client.chat.completions.create({
                 messages: [
                     {
@@ -97,7 +110,7 @@ Return a JSON object with the following structure:
                     },
                     {
                         role: "user",
-                        content: `Class Submissions:\n${submissionsText}`
+                        content: JSON.stringify(submissionDetails, null, 2)
                     }
                 ],
                 model: "llama-3.3-70b-versatile",
@@ -105,19 +118,30 @@ Return a JSON object with the following structure:
                 max_tokens: 2000,
                 response_format: { type: "json_object" }
             });
-
-            const report = JSON.parse(chatCompletion.choices[0].message.content);
-
-            return {
-                ...report,
-                timestamp: new Date(),
-                submissionCount: submissions.length
+    
+            let report = JSON.parse(chatCompletion.choices[0].message.content);
+    
+            // Ensure all required fields exist with defaults if needed
+            report = {
+                performancePatterns: {
+                    summary: report.performancePatterns?.summary || "No performance summary available.",
+                    keyPatterns: report.performancePatterns?.keyPatterns || []
+                },
+                commonStrengths: report.commonStrengths || [],
+                commonDifficulties: report.commonDifficulties || [],
+                misconceptions: report.misconceptions || [],
+                teachingRecommendations: report.teachingRecommendations || [],
+                submissionStats: stats,
+                generatedAt: new Date()
             };
+    
+            return report;
         } catch (error) {
-            console.error('Error generating class report:', error);
-            throw error;
+            console.error('Error in generateClassReport:', error);
+            throw new Error('Failed to generate class report: ' + error.message);
         }
     }
+
 }
 
 export const groqService = new GroqService();

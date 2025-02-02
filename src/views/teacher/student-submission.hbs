@@ -1,0 +1,117 @@
+{{!-- src/views/teacher/student-submission.hbs --}}
+<div class="min-h-screen bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {{!-- Header --}}
+        <div class="border-b border-gray-200 pb-8 mb-8">
+    <div class="flex justify-between items-start">
+        <div>
+            <a href="/teacher/assignments/{{assignment._id}}" class="text-orange-500 hover:text-orange-400">
+                ← Back to Assignment
+            </a>
+            <h1 class="mt-2 text-2xl font-bold text-gray-900">
+                {{title}} 
+            </h1>
+            <p class="mt-2 text-gray-600">
+                Question {{questionNumber}} of {{totalQuestions}} • {{assignment.title}}
+            </p>
+        </div>
+        <div class="text-right">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                {{#if (eq submission.status 'completed')}}
+                    bg-green-100 text-green-800
+                {{else}}
+                    bg-blue-100 text-blue-800
+                {{/if}}">
+                {{submission.status}}
+            </span>
+            <p class="mt-2 text-sm text-gray-500">
+                Last updated: {{formatDate submission.submissionTime}}
+            </p>
+        </div>
+    </div>
+</div>
+
+        {{!-- Question Content --}}
+        <div class="bg-orange-50 rounded-lg p-6 mb-8">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Question</h2>
+            <div class="prose max-w-none">
+                {{{question.content}}}
+            </div>
+        </div>
+
+        {{!-- Student's Work --}}
+        <div class="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-medium text-gray-900">Student's Solution</h2>
+                <span class="text-sm text-gray-500">Mode: {{submission.mode}}</span>
+            </div>
+
+            {{!-- Work content based on mode --}}
+            <div class="mt-4">
+                {{#if (eq submission.mode 'canvas')}}
+                    <img src="{{submission.work}}" alt="Student's work" 
+                         class="max-w-full rounded-lg border border-gray-200">
+                {{else if (eq submission.mode 'latex')}}
+                    <div class="prose max-w-none latex-content bg-gray-50 p-4 rounded-lg">
+                        {{{submission.work}}}
+                    </div>
+                {{else}}
+                    <div class="prose max-w-none bg-gray-50 p-4 rounded-lg">
+                        <pre>{{submission.work}}</pre>
+                    </div>
+                {{/if}}
+            </div>
+
+            {{!-- Hints Used --}}
+            {{#if submission.hints.length}}
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <h3 class="text-sm font-medium text-gray-900 mb-2">Hints Used ({{submission.hints.length}})</h3>
+                <div class="space-y-2">
+                    {{#each submission.hints}}
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <div class="text-sm text-gray-600">{{this.content}}</div>
+                        <div class="text-xs text-gray-400 mt-1">{{formatDate this.timestamp}}</div>
+                    </div>
+                    {{/each}}
+                </div>
+            </div>
+            {{/if}}
+        </div>
+
+        {{!-- AI Feedback --}}
+        {{#if submission.feedback}}
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-6">AI Feedback</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-sm font-medium text-green-600 mb-2">Strengths</h3>
+                    <ul class="list-disc pl-5 space-y-2">
+                        {{#each submission.feedback.strengths}}
+                        <li class="text-sm text-gray-600">{{this}}</li>
+                        {{/each}}
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-medium text-orange-600 mb-2">Areas for Improvement</h3>
+                    <ul class="list-disc pl-5 space-y-2">
+                        {{#each submission.feedback.improvements}}
+                        <li class="text-sm text-gray-600">{{this}}</li>
+                        {{/each}}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <h3 class="text-sm font-medium text-gray-900 mb-2">Overall Analysis</h3>
+                <p class="text-sm text-gray-600">{{submission.feedback.aiAnalysis}}</p>
+            </div>
+
+            <div class="mt-4 text-xs text-gray-400">
+                Feedback generated: {{formatDate submission.feedback.submissionTime}}
+            </div>
+        </div>
+        {{/if}}
+    </div>
+</div>
