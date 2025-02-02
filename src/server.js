@@ -140,7 +140,7 @@ app.get('/api/test', async (req, res) => {
 
 app.get('/', (req, res) => {
     res.render('home', {
-        title: 'Math Learning Platform',
+        title: 'LearnSageAI',
         isHome: true
     });
 });
