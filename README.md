@@ -1,5 +1,6 @@
 
 # LearnSageAI 🎓
+![Teacher Dashboard](src/public/images/dashboard.png)
 
 **The AI-Enhanced Personalized Learning Platform for Teachers and Students**
 
