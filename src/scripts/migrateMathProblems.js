@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs/promises';
 import Problem from '../models/Problem.js';
+import 'dotenv/config'; // Add this line to load .env file
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -13,18 +14,27 @@ const MATH_DIR = join(__dirname, '../../MATH/train');
 
 async function migrateMathProblems() {
     try {
+        // Get MongoDB URI from environment variables with fallback
+        const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mathlearning';
+        console.log('Attempting to connect to MongoDB...');
+        
         // Connect to MongoDB
-        await mongoose.connect('mongodb://localhost:27017/mathlearning', {
+        await mongoose.connect(mongoURI, {
             useNewUrlParser: true,
-            useUnifiedTopology: true
+            useUnifiedTopology: true,
+            ssl: true,
+            tlsAllowInvalidCertificates: true, // Add this
+            tls: true // Add this
         });
-        console.log('Connected to MongoDB');
+        
+        console.log('Connected to MongoDB:', mongoose.connection.host);
+        console.log('Database:', mongoose.connection.name);
 
         // Clear existing problems
-        await Problem.deleteMany({});
-        console.log('Cleared existing problems');
+        const deleteResult = await Problem.deleteMany({});
+        console.log('Cleared existing problems:', deleteResult);
 
-        // Get all topic directories
+        // Rest of your code remains the same...
         const topics = await fs.readdir(MATH_DIR);
         console.log(`Found ${topics.length} topics:`, topics);
 
@@ -80,6 +90,7 @@ async function migrateMathProblems() {
 
                     await problem.save();
                     migratedProblems++;
+                    console.log(`Saved problem ${migratedProblems}: ${uniqueProblemId}`);
                     
                     if (migratedProblems % 10 === 0) {
                         process.stdout.write(`\rMigrated ${migratedProblems}/${totalProblems} problems`);
